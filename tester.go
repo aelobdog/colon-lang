@@ -13,6 +13,7 @@ func testLex() {
 	14
 	-12
 	-true
+	!12
 	`
 	errors := interpret(code)
 	if len(errors) > 0 {
