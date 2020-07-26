@@ -1,2 +1,2 @@
 # colon-lang
-colon is a dynamically typed, interpreted (toy) programming language
+Colon is a dynamically typed, interpreted (toy) programming language
