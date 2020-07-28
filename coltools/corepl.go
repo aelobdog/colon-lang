@@ -30,9 +30,9 @@ func NewRepl() {
 		parser := par.CreateParserState(tokens, lexer.SourceLines())
 
 		// @DEBUG
-		// temp := parser.Parse(true)
-		// fmt.Println(temp.Statements[0].String())
-		parser.Parse(true)
+		temp := parser.Parse(true)
+		fmt.Println(temp.Statements[0].String())
+		// parser.Parse(true)
 
 		fmt.Println(parser.ReportErrors())
 	}

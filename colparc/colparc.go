@@ -17,13 +17,13 @@ type (
 )
 
 // Operator precedence / Binding power values
-// Right binding operator [^] has not been assigned a precedence yet
 const (
 	LOWEST       int = iota
 	ASSIGNMENT       // Assignment operator (currently [+=, -=, *=, /=, %=, ^=] are not supported)
 	COMPARISON       // All relational operators have equal precendence [==, >=, <=, >, <]
 	SIMPLEARITH      // Addition and Subtraction have equal precedence [+, -]
 	COMPLEXARITH     // Multiplication, Division and Remainder have equal precedence [*, /, %]
+	POWER            // To the power of, or multiply be self [n] times
 	PREFIX           // Unary prefix operators have the equal precedence [!, -]
 	FCALL            // Function calls
 )
@@ -42,6 +42,7 @@ var precedenceTable = map[tok.TokenType]int{
 	tok.DIV: COMPLEXARITH,
 	tok.PRD: COMPLEXARITH,
 	tok.REM: COMPLEXARITH,
+	tok.POW: POWER,
 }
 
 // Parser : Current state of the parser
@@ -85,6 +86,7 @@ func CreateParserState(toks []tok.Token, locs []string) *Parser {
 	p.registerInfixFunc(tok.PRD, p.parseInfixExpression)
 	p.registerInfixFunc(tok.DIV, p.parseInfixExpression)
 	p.registerInfixFunc(tok.REM, p.parseInfixExpression)
+	p.registerInfixFunc(tok.POW, p.parseInfixExpression)
 
 	return p
 }
@@ -299,6 +301,9 @@ func (p *Parser) parseInfixExpression(leftExpression ast.Expression) ast.Express
 
 	cPrecedence := p.currPrecedence()
 	p.advanceToken()
+	if cPrecedence == POWER {
+		cPrecedence--
+	}
 	expression.RightExpression = p.parseExpression(cPrecedence)
 	return expression
 }
