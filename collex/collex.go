@@ -70,24 +70,28 @@ func (l *Lexer) NextToken() tok.Token {
 	case '=':
 		if l.PeekChar() == '=' {
 			token = tok.NewToken(tok.EQL, "==", l.line)
+			l.ReadChar()
 		} else {
 			token = tok.NewToken(tok.ASN, string(l.Ch), l.line)
 		}
 	case '!':
 		if l.PeekChar() == '=' {
 			token = tok.NewToken(tok.NEQ, "!=", l.line)
+			l.ReadChar()
 		} else {
 			token = tok.NewToken(tok.LNT, string(l.Ch), l.line)
 		}
 	case '>':
 		if l.PeekChar() == '=' {
 			token = tok.NewToken(tok.GRE, ">=", l.line)
+			l.ReadChar()
 		} else {
 			token = tok.NewToken(tok.GRT, string(l.Ch), l.line)
 		}
 	case '<':
 		if l.PeekChar() == '=' {
 			token = tok.NewToken(tok.LSE, "<=", l.line)
+			l.ReadChar()
 		} else {
 			token = tok.NewToken(tok.LST, string(l.Ch), l.line)
 		}

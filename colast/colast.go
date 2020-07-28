@@ -230,7 +230,30 @@ func (pe *PrefixExpression) TokenLiteral() string {
 
 func (pe *PrefixExpression) String() string {
 	var str bytes.Buffer
-	str.WriteString("(" + pe.Operator + pe.RightExpression.String() + ")")
+	str.WriteString("(" + pe.Operator + " " + pe.RightExpression.String() + ")")
+	return str.String()
+}
+
+/*-------------------------------------------------------------------*/
+
+// InfixExpression : Expressions used as statements
+type InfixExpression struct {
+	Token           tok.Token // holds the prefix token
+	Operator        string
+	LeftExpression  Expression
+	RightExpression Expression
+}
+
+func (ie *InfixExpression) expressionNode() {}
+
+// TokenLiteral : ExpressionStatement
+func (ie *InfixExpression) TokenLiteral() string {
+	return ie.Token.Literal
+}
+
+func (ie *InfixExpression) String() string {
+	var str bytes.Buffer
+	str.WriteString("(" + ie.LeftExpression.String() + " " + ie.Operator + " " + ie.RightExpression.String() + ")")
 	return str.String()
 }
 

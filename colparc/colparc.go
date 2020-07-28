@@ -28,6 +28,22 @@ const (
 	FCALL            // Function calls
 )
 
+var precedenceTable = map[tok.TokenType]int{
+	// relational operators
+	tok.EQL: COMPARISON,
+	tok.NEQ: COMPARISON,
+	tok.LST: COMPARISON,
+	tok.GRT: COMPARISON,
+	tok.LSE: COMPARISON,
+	tok.GRE: COMPARISON,
+	// arithmetic operators
+	tok.PLS: SIMPLEARITH,
+	tok.MIN: SIMPLEARITH,
+	tok.DIV: COMPLEXARITH,
+	tok.PRD: COMPLEXARITH,
+	tok.REM: COMPLEXARITH,
+}
+
 // Parser : Current state of the parser
 type Parser struct {
 	tokens          []tok.Token
@@ -46,6 +62,7 @@ func CreateParserState(toks []tok.Token, locs []string) *Parser {
 	p.errors = []string{}
 	loc = locs
 	p.prefixFunctions = make(map[tok.TokenType]prefixFunc)
+	p.infixFunctions = make(map[tok.TokenType]infixFunc)
 
 	// registering all the valid PREFIX tokens
 	p.registerPrefixFunc(tok.IDN, p.parseIdentifier)
@@ -57,6 +74,17 @@ func CreateParserState(toks []tok.Token, locs []string) *Parser {
 	p.registerPrefixFunc(tok.LNT, p.parsePrefixExpression)
 
 	// registering all the valid INFIX tokens
+	p.registerInfixFunc(tok.EQL, p.parseInfixExpression)
+	p.registerInfixFunc(tok.NEQ, p.parseInfixExpression)
+	p.registerInfixFunc(tok.LSE, p.parseInfixExpression)
+	p.registerInfixFunc(tok.GRE, p.parseInfixExpression)
+	p.registerInfixFunc(tok.LST, p.parseInfixExpression)
+	p.registerInfixFunc(tok.GRT, p.parseInfixExpression)
+	p.registerInfixFunc(tok.PLS, p.parseInfixExpression)
+	p.registerInfixFunc(tok.MIN, p.parseInfixExpression)
+	p.registerInfixFunc(tok.PRD, p.parseInfixExpression)
+	p.registerInfixFunc(tok.DIV, p.parseInfixExpression)
+	p.registerInfixFunc(tok.REM, p.parseInfixExpression)
 
 	return p
 }
@@ -168,16 +196,6 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	return statement
 }
 
-func (p *Parser) parseExpression(precedence int) ast.Expression {
-	prefix := p.prefixFunctions[p.tokens[p.currentToken].TokType]
-	if prefix == nil {
-		p.UndefinedPrefixExpressionError(p.tokens[p.currentToken].TokType)
-		return nil
-	}
-	leftExpression := prefix()
-	return leftExpression
-}
-
 func (p *Parser) parseIdentifier() ast.Expression {
 	return &ast.Identifier{
 		Token: p.tokens[p.currentToken],
@@ -224,6 +242,24 @@ func (p *Parser) parseStringLiteral() ast.Expression {
 	}
 }
 
+func (p *Parser) parseExpression(precedence int) ast.Expression {
+	prefix := p.prefixFunctions[p.tokens[p.currentToken].TokType]
+	if prefix == nil {
+		p.UndefinedPrefixExpressionError(p.tokens[p.currentToken].TokType)
+		return nil
+	}
+	leftExpression := prefix()
+	for !p.peekTokIs(tok.EOL) && precedence < p.peekPrecedence() {
+		infix := p.infixFunctions[p.tokens[p.peekedToken].TokType]
+		if infix == nil {
+			return leftExpression
+		}
+		p.advanceToken()
+		leftExpression = infix(leftExpression)
+	}
+	return leftExpression
+}
+
 func (p *Parser) parsePrefixExpression() ast.Expression {
 	expression := &ast.PrefixExpression{
 		Token:    p.tokens[p.currentToken],
@@ -231,7 +267,6 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 	}
 	p.advanceToken()
 	expression.RightExpression = p.parseExpression(PREFIX)
-
 	/*
 		type checking :
 		 	has [-] been used with numeric literals ?
@@ -252,6 +287,19 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 		}
 	}
 
+	return expression
+}
+
+func (p *Parser) parseInfixExpression(leftExpression ast.Expression) ast.Expression {
+	expression := &ast.InfixExpression{
+		Token:          p.tokens[p.currentToken],
+		Operator:       p.tokens[p.currentToken].Literal,
+		LeftExpression: leftExpression,
+	}
+
+	cPrecedence := p.currPrecedence()
+	p.advanceToken()
+	expression.RightExpression = p.parseExpression(cPrecedence)
 	return expression
 }
 
@@ -278,6 +326,22 @@ func (p *Parser) NextTokenIs(t tok.TokenType) bool {
 	}
 	p.ExpectedTokenError(t)
 	return false
+}
+
+// currPrecedence : to get the precedence / binding power value for the current token
+func (p *Parser) currPrecedence() int {
+	if p, ok := precedenceTable[p.tokens[p.currentToken].TokType]; ok {
+		return p
+	}
+	return LOWEST
+}
+
+// peekPrecedence : to get the precedence / binding power value for the token after the current token
+func (p *Parser) peekPrecedence() int {
+	if p, ok := precedenceTable[p.tokens[p.peekedToken].TokType]; ok {
+		return p
+	}
+	return LOWEST
 }
 
 /* --------------------------------------------------------------------------
