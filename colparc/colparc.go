@@ -73,6 +73,7 @@ func CreateParserState(toks []tok.Token, locs []string) *Parser {
 	p.registerPrefixFunc(tok.STR, p.parseStringLiteral)
 	p.registerPrefixFunc(tok.MIN, p.parsePrefixExpression)
 	p.registerPrefixFunc(tok.LNT, p.parsePrefixExpression)
+	p.registerPrefixFunc(tok.LPR, p.parseGroupedExpression)
 
 	// registering all the valid INFIX tokens
 	p.registerInfixFunc(tok.EQL, p.parseInfixExpression)
@@ -308,6 +309,16 @@ func (p *Parser) parseInfixExpression(leftExpression ast.Expression) ast.Express
 	return expression
 }
 
+func (p *Parser) parseGroupedExpression() ast.Expression {
+	p.advanceToken()
+	expression := p.parseExpression(LOWEST)
+	if !p.NextTokenIs(tok.RPR) {
+		p.ClosedParenMissingError()
+		return nil
+	}
+	return expression
+}
+
 /* --------------------------------------------------------------------------
 							Helper functions
   --------------------------------------------------------------------------- */
@@ -370,6 +381,13 @@ func (p *Parser) registerInfixFunc(toktype tok.TokenType, infixFunction infixFun
 // ExpectedTokenError : happens when the parser is expecting a particular token but recieves some other token
 func (p *Parser) ExpectedTokenError(et tok.TokenType) {
 	err := fmt.Sprintf("\nError on line %d : Expecting token of type %s but got %s instead", p.tokens[p.peekedToken].Line, et.String(), p.tokens[p.peekedToken].TokType.String())
+	err += "\n\n\t" + loc[p.tokens[p.peekedToken].Line]
+	p.errors = append(p.errors, err)
+}
+
+// ClosedParenMissingError : happens when an expression is missing a right parenthesis
+func (p *Parser) ClosedParenMissingError() {
+	err := fmt.Sprintf("\nError on line %d : Closing parenthesis ')' expected but not found.", p.tokens[p.currentToken].Line)
 	err += "\n\n\t" + loc[p.tokens[p.peekedToken].Line]
 	p.errors = append(p.errors, err)
 }

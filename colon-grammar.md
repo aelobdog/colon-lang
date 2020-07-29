@@ -6,11 +6,11 @@
 
 ## standard input
 
-    i: var_name type
+    n: var_name type
 
 ## standard output
 
-    p: "{FOO} message {BAR}"
+    p: FOO + "message" + BAR
     p: "message"
 
 ## sleep / wait
@@ -29,25 +29,29 @@
 
     c:
 
-## switch / if
+## if condition
 
-    s:
-    (condition)
+    i:  (condition)
         <statement>
+    :i
+
+OR (with else)
+
+    i:  (condition)
         <statement>
-    :s
+    :i e:
+        <statement>
+    :e
 
 # loop
 
     l: (condition)
-        <statement>
         <statement>
     :l
 
 ## function
 
     f: func_name (v: foo, v: bar)
-        <statement>
         <statement>
     :f
 
@@ -57,10 +61,3 @@ OR
     <statement>
     <statement>
     :f
-
-## Data / Literal types
-
-- Integer [-1, 0, 1, ...]
-- Floating [-1.3, 0.0, 12.6, ...]
-- Boolean [t, T, true, TRUE, f, F, false, FALSE]
-- String ["hello", ...]

@@ -9,8 +9,8 @@ import (
 
 func testLex() {
 	code := `
-	-12
-	12 + 13 * 24 >= 14 + 14
+	(12 + 12) * 12
+	12 + 12 * 12
 	`
 	errors := interpret(code)
 	if len(errors) > 0 {

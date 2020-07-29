@@ -39,8 +39,10 @@ const (
 	PRN // PRINT
 	INP // INPUT
 	VAR // VARIABLE
-	SWB // SWITCH BEGIN
-	SWE // SWITCH END
+	IFB // IF BEGIN
+	IFE // IF END
+	ELB // ELSE BEGIN
+	ELE // ELSE END
 	SLP // SLEEP
 	LPB // LOOP BEGIN
 	LPE // LOOP END
@@ -110,10 +112,14 @@ func (t TokenType) String() string {
 		return "INPUT"
 	case VAR:
 		return "VARIABLE"
-	case SWB:
-		return "SWB"
-	case SWE:
-		return "SWE"
+	case IFB:
+		return "BEGIN: IF"
+	case IFE:
+		return "END: IF"
+	case ELB:
+		return "BEGIN: ELSE"
+	case ELE:
+		return "END: ELSE"
 	case SLP:
 		return "SLP"
 	case LPB:
@@ -143,10 +149,12 @@ func (t TokenType) String() string {
 // Keywords map
 var Keywords map[string]TokenType = map[string]TokenType{
 	"p:": PRN,
-	"i:": INP,
+	"N:": INP,
 	"v:": VAR,
-	"s:": SWB,
-	":s": SWE,
+	"i:": IFB,
+	":i": IFE,
+	"e:": ELB,
+	":e": ELE,
 	"w:": SLP,
 	"l:": LPB,
 	":l": LPE,
