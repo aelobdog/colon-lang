@@ -258,3 +258,17 @@ func (ie *InfixExpression) String() string {
 }
 
 /*-------------------------------------------------------------------*/
+
+// IfStatement : for if-else conditionals
+type IfStatement struct {
+	Token tok.Token // holds the [i] token
+	Condition Expression
+	IfBody *Block
+	ElseBody *Block
+}
+
+// Block : to represent blocks of data such as those within if-else, loops, functions
+type Block struct {
+	Token tok.Token
+	Statements []Statement
+}

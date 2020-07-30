@@ -31,13 +31,13 @@
 
 ## if condition
 
-    i:  (condition)
+    i (condition) :
         <statement>
     :i
 
 OR (with else)
 
-    i:  (condition)
+    i (condition) :
         <statement>
     :i e:
         <statement>
@@ -45,19 +45,19 @@ OR (with else)
 
 # loop
 
-    l: (condition)
+    l (condition) :
         <statement>
     :l
 
 ## function
 
-    f: func_name (v: foo, v: bar)
+    f func_name (v: foo, v: bar) :
         <statement>
     :f
 
 OR
 
-    v: name = f: (v: foobar)
+    v: name = f (v: foobar) :
     <statement>
     <statement>
     :f
