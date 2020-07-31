@@ -1,0 +1,13 @@
+PLAN OF ACTION FOR THE SESSION
+------------------------------
+1. Add EOF to token stream if missing                                   ---DONE---
+2. make keywords (beginning) without colon
+    -> let colon be the block begin operator                            ---DONE---
+    -> for commands that require end tag, block ends at the END_TAG
+    -> for commands that don't require end tag, make EOL the END_TAG
+3. make current token and peek token safe
+
+4. 
+5. 
+6. 
+7. 

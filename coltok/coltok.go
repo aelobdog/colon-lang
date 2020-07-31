@@ -151,21 +151,21 @@ func (t TokenType) String() string {
 
 // Keywords map
 var Keywords map[string]TokenType = map[string]TokenType{
-	"p:": PRN,
-	"N:": INP,
-	"v:": VAR,
+	"p":  PRN,
+	"n":  INP,
+	"v":  VAR,
 	"i":  IFB,
 	":i": IFE,
 	"e":  ELB,
 	":e": ELE,
-	"w:": SLP,
+	"w":  SLP,
 	"l":  LPB,
 	":l": LPE,
 	"f":  FNB,
 	":f": FNE,
-	"r:": RET,
-	"b:": BRK,
-	"c:": CNT,
+	"r":  RET,
+	"b":  BRK,
+	"c":  CNT,
 }
 
 // Token : properties
@@ -190,7 +190,7 @@ func IsDigit(val byte) bool {
 
 // IsLetter : to check if the current character is a letter
 func IsLetter(val byte) bool {
-	if (val >= 'a' && val <= 'z') || (val >= 'A' && val <= 'Z') || (val == '_') || (val == ':') {
+	if (val >= 'a' && val <= 'z') || (val >= 'A' && val <= 'Z') || (val == '_') {
 		return true
 	}
 	return false

@@ -18,7 +18,13 @@ type Lexer struct {
 
 // CreateLexerState : to create a new lexer state and initialize it
 func CreateLexerState(source string) *Lexer {
-	l := Lexer{Source: source, CurrPos: 0, NextPos: 1, Ch: source[0], line: 0}
+	l := Lexer{
+		Source:  source,
+		CurrPos: 0,
+		NextPos: 1,
+		Ch:      source[0],
+		line:    0,
+	}
 	return &l
 }
 
@@ -101,6 +107,15 @@ func (l *Lexer) NextToken() tok.Token {
 		token = tok.NewToken(tok.LOR, string(l.Ch), l.line)
 	case 0:
 		token = tok.NewToken(tok.EOF, "", l.line)
+	case ':':
+		nextChar := l.PeekChar()
+		potentialKeyword := ":" + string(nextChar)
+		if tok.IsKeyword(potentialKeyword) {
+			token = tok.NewToken(tok.Keywords[potentialKeyword], potentialKeyword, l.line)
+			l.ReadChar()
+		} else {
+			token = tok.NewToken(tok.BLK, ":", l.line)
+		}
 	default:
 		if tok.IsDigit(l.Ch) {
 			token = l.readNumber()
@@ -192,6 +207,10 @@ func (l *Lexer) Lex() []tok.Token {
 	for l.Ch != 0 {
 		tokens = append(tokens, l.NextToken())
 		l.ReadChar()
+	}
+	// pad tokens with an EOF at the end in case the input does not end in EOF
+	if tokens[len(tokens)-1].TokType != tok.EOF {
+		tokens = append(tokens, tok.NewToken(tok.EOF, "", tokens[len(tokens)-1].Line+1))
 	}
 	return tokens
 }

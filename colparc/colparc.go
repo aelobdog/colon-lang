@@ -5,6 +5,7 @@ import (
 	tok "colon/coltok"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 // loc : To store the contents of the source file. For better error reporting
@@ -74,6 +75,7 @@ func CreateParserState(toks []tok.Token, locs []string) *Parser {
 	p.registerPrefixFunc(tok.MIN, p.parsePrefixExpression)
 	p.registerPrefixFunc(tok.LNT, p.parsePrefixExpression)
 	p.registerPrefixFunc(tok.LPR, p.parseGroupedExpression)
+	p.registerPrefixFunc(tok.IFB, p.parseIfExpression)
 
 	// registering all the valid INFIX tokens
 	p.registerInfixFunc(tok.EQL, p.parseInfixExpression)
@@ -92,10 +94,13 @@ func CreateParserState(toks []tok.Token, locs []string) *Parser {
 	return p
 }
 
-// nextToken : To move the current token and the peek token ahead by one
+// advanceToken : To move the current token and the peek token ahead by one
 func (p *Parser) advanceToken() {
-	p.currentToken = p.peekedToken
-	p.peekedToken++
+	if !(p.currentToken >= len(p.tokens)-1) {
+		p.currentToken = p.peekedToken
+		p.peekedToken++
+	}
+	// do nothing if currentToken is the last token
 }
 
 // Errors : Returns a list of errors
@@ -104,30 +109,14 @@ func (p *Parser) Errors() []string {
 }
 
 // Parse : function that parses a stream of tokens and returns the ast produced
-func (p *Parser) Parse(interpreter bool) *ast.Program {
+func (p *Parser) Parse() *ast.Program {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
-
 	for !p.currTokIs(tok.EOF) {
-
-		// @DEBUG
-		// fmt.Println(p.tokens[p.currentToken])
-
-		if p.currTokIs(tok.EOL) {
-			p.advanceToken()
-		}
-
 		statement := p.parseStatement()
 		if statement != nil {
 			program.Statements = append(program.Statements, statement)
 		}
-
-		if interpreter == true {
-			if p.currTokIs(tok.EOL) {
-				return program
-			}
-		}
-
 		p.advanceToken()
 	}
 	return program
@@ -140,6 +129,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseVarStatement()
 	case tok.RET:
 		return p.parseReturnStatement()
+	case tok.EOL:
+		return nil
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -149,30 +140,25 @@ func (p *Parser) parseStatement() ast.Statement {
 				Statement and Expression parsing functions
   --------------------------------------------------------------------------- */
 
-// parseVarStatement : to parse variable declaration and/or initialization statements
 func (p *Parser) parseVarStatement() *ast.VarStatement {
 	statement := &ast.VarStatement{Token: p.tokens[p.currentToken]}
-
-	// @DEBUG
-	// fmt.Println(p.tokens[p.currentToken])
-	// fmt.Println(p.tokens[p.peekedToken])
-
+	if !p.NextTokenIs(tok.BLK) {
+		return nil
+	}
 	if !p.NextTokenIs(tok.IDN) {
 		return nil
 	}
-
 	statement.Name = &ast.Identifier{
 		Token: p.tokens[p.currentToken],
 		Value: p.tokens[p.currentToken].Literal,
 	}
-
 	if !p.NextTokenIs(tok.ASN) {
 		return nil
 	}
 
 	// DEAL WITH RHS EXPRESSION
 
-	for !p.currTokIs(tok.EOL) {
+	for !p.currTokIs(tok.EOL) && p.currentToken < len(p.tokens)-1 {
 		p.advanceToken()
 	}
 	return statement
@@ -193,9 +179,6 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	statement := &ast.ExpressionStatement{Token: p.tokens[p.currentToken]}
 	statement.Expression = p.parseExpression(LOWEST)
-	if p.peekTokIs(tok.EOL) {
-		p.advanceToken()
-	}
 	return statement
 }
 
@@ -299,7 +282,6 @@ func (p *Parser) parseInfixExpression(leftExpression ast.Expression) ast.Express
 		Operator:       p.tokens[p.currentToken].Literal,
 		LeftExpression: leftExpression,
 	}
-
 	cPrecedence := p.currPrecedence()
 	p.advanceToken()
 	if cPrecedence == POWER {
@@ -319,23 +301,73 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 	return expression
 }
 
+func (p *Parser) parseIfExpression() ast.Expression {
+	expression := &ast.IfExpression{
+		Token: p.tokens[p.currentToken],
+	}
+	if !p.NextTokenIs(tok.LPR) {
+		return nil
+	}
+
+	expression.Condition = p.parseGroupedExpression()
+
+	if !p.NextTokenIs(tok.BLK) {
+		return nil
+	}
+	p.advanceToken()
+
+	expression.IfBody = p.parseBlock(tok.IFE)
+	if p.tokens[p.currentToken].TokType == tok.ELB {
+		if !p.NextTokenIs(tok.BLK) {
+			return nil
+		}
+		p.advanceToken()
+		expression.ElseBody = p.parseBlock(tok.ELE)
+	}
+
+	return expression
+}
+
+func (p *Parser) parseBlock(endToken tok.TokenType) *ast.Block {
+	block := &ast.Block{}
+	block.Statements = []ast.Statement{}
+
+	for p.tokens[p.currentToken].TokType != endToken && p.tokens[p.currentToken].TokType != tok.EOF {
+		statement := p.parseStatement()
+		if statement != nil {
+			block.Statements = append(block.Statements, statement)
+		}
+		p.advanceToken()
+	}
+	p.advanceToken()
+
+	return block
+}
+
 /* --------------------------------------------------------------------------
 							Helper functions
   --------------------------------------------------------------------------- */
 
 // currTokIs : helper function, checks if the current token being scanned is of the desired type or not
 func (p *Parser) currTokIs(tokType tok.TokenType) bool {
-	return p.tokens[p.currentToken].TokType == tokType
+	if p.currentToken <= len(p.tokens)-1 {
+		return p.tokens[p.currentToken].TokType == tokType
+	}
+	fmt.Println("Exceeded token length")
+	return false
 }
 
 // peekTokIs : helper function, checks if the next token is of the desired type or not
 func (p *Parser) peekTokIs(tokType tok.TokenType) bool {
-	return p.tokens[p.peekedToken].TokType == tokType
+	if p.currentToken <= len(p.tokens)-2 {
+		return p.tokens[p.peekedToken].TokType == tokType
+	}
+	fmt.Println("Exceeded token length")
+	return false
 }
 
 // NextTokenIs : moves to the next token only it is of the desired token type
 func (p *Parser) NextTokenIs(t tok.TokenType) bool {
-	// if p.tokens[p.peekedToken].TokType == t {
 	if p.peekTokIs(t) {
 		p.advanceToken()
 		return true
@@ -346,18 +378,32 @@ func (p *Parser) NextTokenIs(t tok.TokenType) bool {
 
 // currPrecedence : to get the precedence / binding power value for the current token
 func (p *Parser) currPrecedence() int {
-	if p, ok := precedenceTable[p.tokens[p.currentToken].TokType]; ok {
-		return p
+	if p.currentToken <= len(p.tokens)-1 {
+		if p, ok := precedenceTable[p.tokens[p.currentToken].TokType]; ok {
+			return p
+		}
+		return LOWEST
 	}
-	return LOWEST
+	return -1
 }
 
 // peekPrecedence : to get the precedence / binding power value for the token after the current token
 func (p *Parser) peekPrecedence() int {
-	if p, ok := precedenceTable[p.tokens[p.peekedToken].TokType]; ok {
-		return p
+	if p.currentToken <= len(p.tokens)-2 {
+		if p, ok := precedenceTable[p.tokens[p.peekedToken].TokType]; ok {
+			return p
+		}
+		return LOWEST
 	}
-	return LOWEST
+	return -1
+}
+
+func (p *Parser) removeExtraNewLines() {
+	for p.tokens[p.currentToken].TokType != tok.EOF &&
+		p.tokens[p.currentToken].TokType == tok.EOL &&
+		p.currentToken < len(p.tokens)-1 {
+		p.advanceToken()
+	}
 }
 
 /* --------------------------------------------------------------------------
@@ -381,7 +427,7 @@ func (p *Parser) registerInfixFunc(toktype tok.TokenType, infixFunction infixFun
 // ExpectedTokenError : happens when the parser is expecting a particular token but recieves some other token
 func (p *Parser) ExpectedTokenError(et tok.TokenType) {
 	err := fmt.Sprintf("\nError on line %d : Expecting token of type %s but got %s instead", p.tokens[p.peekedToken].Line, et.String(), p.tokens[p.peekedToken].TokType.String())
-	err += "\n\n\t" + loc[p.tokens[p.peekedToken].Line]
+	err += "\n\n\t" + strings.TrimSpace(loc[p.tokens[p.currentToken].Line])
 	p.errors = append(p.errors, err)
 }
 
@@ -403,12 +449,14 @@ func (p *Parser) LiteralConversionError(literal, target string) {
 // for example, if the programmer has the expression -> (* 42) -> this makes no sense because '*' is not a valid prefix token
 func (p *Parser) UndefinedPrefixExpressionError(t tok.TokenType) {
 	err := fmt.Sprintf("\nError on line %d : %q is not a valid 'prefix' expression/token.", p.tokens[p.currentToken].Line, t.String())
+	err += "\n\n\t" + loc[p.tokens[p.peekedToken].Line]
 	p.errors = append(p.errors, err)
 }
 
 // WrongDataTypeWithOperatorError : happens when an operator is used with operands that the operator does not operate on
 func (p *Parser) WrongDataTypeWithOperatorError(expected, operator string) {
 	err := fmt.Sprintf("\nError on line %d : Operator %q can be used with operands of type %s only.", p.tokens[p.currentToken].Line, operator, expected)
+	err += "\n\n\t" + loc[p.tokens[p.peekedToken].Line]
 	p.errors = append(p.errors, err)
 }
 
