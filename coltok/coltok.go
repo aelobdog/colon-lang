@@ -52,6 +52,7 @@ const (
 	BRK // BREAK
 	CNT // CONTINUE
 
+	BLK // BLOCK
 	EOL // END OF LINE
 	EOF // END OF FILE
 	ILG // ILLEGAL CHARACTER
@@ -142,6 +143,8 @@ func (t TokenType) String() string {
 		return "EOF"
 	case EOL:
 		return "EOL"
+	case BLK:
+		return "BLOCK"
 	}
 	return "ILLEGAL_TOKEN"
 }
@@ -151,14 +154,14 @@ var Keywords map[string]TokenType = map[string]TokenType{
 	"p:": PRN,
 	"N:": INP,
 	"v:": VAR,
-	"i:": IFB,
+	"i":  IFB,
 	":i": IFE,
-	"e:": ELB,
+	"e":  ELB,
 	":e": ELE,
 	"w:": SLP,
-	"l:": LPB,
+	"l":  LPB,
 	":l": LPE,
-	"f:": FNB,
+	"f":  FNB,
 	":f": FNE,
 	"r:": RET,
 	"b:": BRK,

@@ -152,6 +152,8 @@ func (l *Lexer) readWord() tok.Token {
 	} else if word == "true" || word == "false" ||
 		word == "TRUE" || word == "FALSE" {
 		return tok.NewToken(tok.BOL, word, l.line)
+	} else if word == ":" {
+		return tok.NewToken(tok.BLK, word, l.line)
 	}
 	return tok.NewToken(tok.IDN, word, l.line)
 }

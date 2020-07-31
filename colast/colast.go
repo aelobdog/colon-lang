@@ -259,16 +259,58 @@ func (ie *InfixExpression) String() string {
 
 /*-------------------------------------------------------------------*/
 
-// IfStatement : for if-else conditionals
-type IfStatement struct {
-	Token tok.Token // holds the [i] token
+// IfExpression : If-else conditional expressions
+type IfExpression struct {
+	Token     tok.Token // holds the [i] token
 	Condition Expression
-	IfBody *Block
-	ElseBody *Block
+	IfBody    *Block
+	ElseBody  *Block
 }
+
+func (ife *IfExpression) expressionNode() {}
+
+// TokenLiteral : IfExpression
+func (ife *IfExpression) TokenLiteral() string {
+	return ife.Token.Literal
+}
+
+func (ife *IfExpression) String() string {
+	var str bytes.Buffer
+	str.WriteString("IF (begin) :\n")
+	str.WriteString("CONDITION : " + ife.Condition.String())
+	str.WriteString("BODY (if) :\n")
+	str.WriteString(ife.IfBody.String())
+	str.WriteString("\nIF (end)")
+	if ife.ElseBody != nil {
+		str.WriteString("ELSE (begin) :\n")
+		str.WriteString("BODY (else) :\n")
+		str.WriteString(ife.ElseBody.String())
+		str.WriteString("\nELSE (end)")
+	}
+	return str.String()
+}
+
+/*-------------------------------------------------------------------*/
 
 // Block : to represent blocks of data such as those within if-else, loops, functions
 type Block struct {
-	Token tok.Token
+	Token      tok.Token // holds the [:] block indicator token
 	Statements []Statement
 }
+
+func (b *Block) statementNode() {}
+
+// TokenLiteral : Block
+func (b *Block) TokenLiteral() string {
+	return b.Token.Literal
+}
+
+func (b *Block) String() string {
+	var str bytes.Buffer
+	for _, v := range b.Statements {
+		str.WriteString(v.String() + "\n")
+	}
+	return str.String()
+}
+
+/*-------------------------------------------------------------------*/
