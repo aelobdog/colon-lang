@@ -44,6 +44,8 @@ var precedenceTable = map[tok.TokenType]int{
 	tok.PRD: COMPLEXARITH,
 	tok.REM: COMPLEXARITH,
 	tok.POW: POWER,
+	// function call operator
+	tok.LPR: FCALL,
 }
 
 // Parser : Current state of the parser
@@ -76,6 +78,7 @@ func CreateParserState(toks []tok.Token, locs []string) *Parser {
 	p.registerPrefixFunc(tok.LNT, p.parsePrefixExpression)
 	p.registerPrefixFunc(tok.LPR, p.parseGroupedExpression)
 	p.registerPrefixFunc(tok.IFB, p.parseIfExpression)
+	p.registerPrefixFunc(tok.FNB, p.parseFunctionExpression)
 
 	// registering all the valid INFIX tokens
 	p.registerInfixFunc(tok.EQL, p.parseInfixExpression)
@@ -90,6 +93,7 @@ func CreateParserState(toks []tok.Token, locs []string) *Parser {
 	p.registerInfixFunc(tok.DIV, p.parseInfixExpression)
 	p.registerInfixFunc(tok.REM, p.parseInfixExpression)
 	p.registerInfixFunc(tok.POW, p.parseInfixExpression)
+	p.registerInfixFunc(tok.LPR, p.parseFunctionCall)
 
 	return p
 }
@@ -155,10 +159,9 @@ func (p *Parser) parseVarStatement() *ast.VarStatement {
 	if !p.NextTokenIs(tok.ASN) {
 		return nil
 	}
-
-	// DEAL WITH RHS EXPRESSION
-
-	for !p.currTokIs(tok.EOL) && p.currentToken < len(p.tokens)-1 {
+	p.advanceToken()
+	statement.Value = p.parseExpression(LOWEST)
+	if p.peekTokIs(tok.EOL) {
 		p.advanceToken()
 	}
 	return statement
@@ -167,10 +170,8 @@ func (p *Parser) parseVarStatement() *ast.VarStatement {
 func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	statement := &ast.ReturnStatement{Token: p.tokens[p.currentToken]}
 	p.advanceToken()
-
-	// DEAL WITH RETURN EXPRESSION
-
-	for !p.currTokIs(tok.EOL) {
+	statement.ReturnValue = p.parseExpression(LOWEST)
+	if p.peekTokIs(tok.EOL) {
 		p.advanceToken()
 	}
 	return statement
@@ -308,28 +309,25 @@ func (p *Parser) parseIfExpression() ast.Expression {
 	if !p.NextTokenIs(tok.LPR) {
 		return nil
 	}
-
 	expression.Condition = p.parseGroupedExpression()
-
 	if !p.NextTokenIs(tok.BLK) {
 		return nil
 	}
-	p.advanceToken()
-
 	expression.IfBody = p.parseBlock(tok.IFE)
 	if p.tokens[p.currentToken].TokType == tok.ELB {
 		if !p.NextTokenIs(tok.BLK) {
 			return nil
 		}
-		p.advanceToken()
 		expression.ElseBody = p.parseBlock(tok.ELE)
 	}
-
 	return expression
 }
 
 func (p *Parser) parseBlock(endToken tok.TokenType) *ast.Block {
-	block := &ast.Block{}
+	block := &ast.Block{
+		Token: p.tokens[p.currentToken],
+	}
+	p.advanceToken()
 	block.Statements = []ast.Statement{}
 
 	for p.tokens[p.currentToken].TokType != endToken && p.tokens[p.currentToken].TokType != tok.EOF {
@@ -342,6 +340,84 @@ func (p *Parser) parseBlock(endToken tok.TokenType) *ast.Block {
 	p.advanceToken()
 
 	return block
+}
+
+func (p *Parser) parseFunctionExpression() ast.Expression {
+	expression := &ast.FunctionExpression{
+		Token: p.tokens[p.currentToken],
+	}
+	if !p.NextTokenIs(tok.LPR) {
+		return nil
+	}
+	expression.Params = p.parseFunctionParameters()
+	// fmt.Println(p.parseFunctionParameters())
+	if !p.NextTokenIs(tok.BLK) {
+		return nil
+	}
+	expression.FuncBody = p.parseBlock(tok.FNE)
+	return expression
+}
+
+func (p *Parser) parseFunctionParameters() []*ast.Identifier {
+	params := []*ast.Identifier{}
+
+	// current token is "(" So checking if the next token is ")" , denoting that function has no params
+	if p.peekTokIs(tok.RPR) {
+		p.advanceToken() // current token is now ")" and the next token should be ":"
+		return params
+	}
+	p.advanceToken()
+
+	// Extracting the first parameter
+	param := &ast.Identifier{
+		Token: p.tokens[p.currentToken],
+		Value: p.tokens[p.currentToken].Literal,
+	}
+	params = append(params, param)
+
+	// Extracting any other parameters if present
+	for p.peekTokIs(tok.COM) {
+		// skipping over the comma
+		p.advanceToken()
+		p.advanceToken()
+		param := &ast.Identifier{
+			Token: p.tokens[p.currentToken],
+			Value: p.tokens[p.currentToken].Literal,
+		}
+		params = append(params, param)
+	}
+	if !p.NextTokenIs(tok.RPR) {
+		return nil
+	}
+	return params
+}
+
+func (p *Parser) parseFunctionCall(leftExpr ast.Expression) ast.Expression {
+	expression := &ast.FunctionCallExpression{
+		Token:    p.tokens[p.currentToken],
+		Function: leftExpr,
+	}
+	expression.Arguments = p.parseFunctionCallArguments()
+	return expression
+}
+
+func (p *Parser) parseFunctionCallArguments() []ast.Expression {
+	args := []ast.Expression{}
+	if p.peekTokIs(tok.RPR) {
+		p.advanceToken()
+		return args
+	}
+	p.advanceToken()
+	args = append(args, p.parseExpression(LOWEST))
+	for p.peekTokIs(tok.COM) {
+		p.advanceToken()
+		p.advanceToken()
+		args = append(args, p.parseExpression(LOWEST))
+	}
+	if !p.NextTokenIs(tok.RPR) {
+		return nil
+	}
+	return args
 }
 
 /* --------------------------------------------------------------------------

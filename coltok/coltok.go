@@ -138,7 +138,7 @@ func (t TokenType) String() string {
 	case CNT:
 		return "CNT"
 	case COM:
-		return "COM"
+		return "COMMA"
 	case EOF:
 		return "EOF"
 	case EOL:

@@ -51,13 +51,12 @@ OR (with else)
 
 ## function
 
-    f func_name (v: foo, v: bar) :
-        <statement>
-    :f
-
-OR
-
-    v: name = f (v: foobar) :
+    v: name = f (foo, bar, baz) :
     <statement>
     <statement>
     :f
+
+## function call
+
+    add(1 2 add(12 3))
+    mul(12 + 2, add(12, 2) + 1)

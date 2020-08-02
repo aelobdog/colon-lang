@@ -276,14 +276,14 @@ func (ife *IfExpression) TokenLiteral() string {
 
 func (ife *IfExpression) String() string {
 	var str bytes.Buffer
-	str.WriteString("IF (begin) :\n")
-	str.WriteString("CONDITION : " + ife.Condition.String())
-	str.WriteString("BODY (if) :\n")
+	str.WriteString("\nIF (begin) :")
+	str.WriteString("\nCONDITION : " + ife.Condition.String())
+	str.WriteString("\nBODY (if) :\n")
 	str.WriteString(ife.IfBody.String())
 	str.WriteString("\nIF (end)")
 	if ife.ElseBody != nil {
-		str.WriteString("ELSE (begin) :\n")
-		str.WriteString("BODY (else) :\n")
+		str.WriteString("\nELSE (begin) :")
+		str.WriteString("\nBODY (else) :\n")
 		str.WriteString(ife.ElseBody.String())
 		str.WriteString("\nELSE (end)")
 	}
@@ -309,6 +309,61 @@ func (b *Block) String() string {
 	var str bytes.Buffer
 	for _, v := range b.Statements {
 		str.WriteString(v.String() + "\n")
+	}
+	return str.String()
+}
+
+/*-------------------------------------------------------------------*/
+
+// FunctionExpression : function definition expressions
+type FunctionExpression struct {
+	Token    tok.Token // the [f] token
+	Params   []*Identifier
+	FuncBody *Block
+}
+
+func (f *FunctionExpression) expressionNode() {}
+
+// TokenLiteral : FunctionExpression
+func (f *FunctionExpression) TokenLiteral() string {
+	return f.Token.Literal
+}
+
+func (f *FunctionExpression) String() string {
+	var str bytes.Buffer
+	str.WriteString("\nFUNC (begin):")
+	str.WriteString("\nPARAMS : ")
+	for _, v := range f.Params {
+		str.WriteString(v.String() + ", ")
+	}
+	str.WriteString("\nFUNC BODY : \n")
+	str.WriteString(f.FuncBody.String())
+	str.WriteString("\nFUNC (end)")
+	return str.String()
+}
+
+/*-------------------------------------------------------------------*/
+
+// FunctionCallExpression : function call expressions
+type FunctionCallExpression struct {
+	Token     tok.Token  // for the ( of the function call
+	Function  Expression // for storing a function definition or a function name
+	Arguments []Expression
+}
+
+func (fc *FunctionCallExpression) expressionNode() {}
+
+// TokenLiteral : FunctionCallExpression
+func (fc *FunctionCallExpression) TokenLiteral() string {
+	return fc.Token.Literal
+}
+
+func (fc *FunctionCallExpression) String() string {
+	var str bytes.Buffer
+	str.WriteString(fc.Function.String())
+	str.WriteString("\nArguments: ")
+	for _, v := range fc.Arguments {
+		str.WriteString(v.String() + ", ")
 	}
 	return str.String()
 }
