@@ -7,7 +7,7 @@ Colon is an _experimental_ project. It is highly unstable and incomplete as of n
 
 ### PROGRESS
 
-`Lexer : [==========]`
-`Parser: [========  ]`
-`Eval  : [          ]`
-`REPL  : [===       ]`
+Lexer : [==========]
+Parser: [========  ]
+Eval  : [          ]
+REPL  : [===       ]
