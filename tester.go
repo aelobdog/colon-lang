@@ -10,11 +10,7 @@ import (
 
 func testLex() {
 	code := `
-	v: helloWorld = f () :
-		21 + 21 * 42
-	:f
-
-	helloWorld()
+	
 	`
 	// interpret(code)
 	errors := interpret(code)

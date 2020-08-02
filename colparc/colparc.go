@@ -79,6 +79,7 @@ func CreateParserState(toks []tok.Token, locs []string) *Parser {
 	p.registerPrefixFunc(tok.LPR, p.parseGroupedExpression)
 	p.registerPrefixFunc(tok.IFB, p.parseIfExpression)
 	p.registerPrefixFunc(tok.FNB, p.parseFunctionExpression)
+	p.registerPrefixFunc(tok.LPB, p.parseLoopStatement)
 
 	// registering all the valid INFIX tokens
 	p.registerInfixFunc(tok.EQL, p.parseInfixExpression)
@@ -418,6 +419,21 @@ func (p *Parser) parseFunctionCallArguments() []ast.Expression {
 		return nil
 	}
 	return args
+}
+
+func (p *Parser) parseLoopStatement() ast.Expression {
+	loopExpression := &ast.LoopExpression{
+		Token: p.tokens[p.currentToken],
+	}
+	if !p.NextTokenIs(tok.LPR) {
+		return nil
+	}
+	loopExpression.Condition = p.parseGroupedExpression()
+	if !p.NextTokenIs(tok.BLK) {
+		return nil
+	}
+	loopExpression.LoopBody = p.parseBlock(tok.LPE)
+	return loopExpression
 }
 
 /* --------------------------------------------------------------------------

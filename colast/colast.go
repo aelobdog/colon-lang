@@ -369,3 +369,29 @@ func (fc *FunctionCallExpression) String() string {
 }
 
 /*-------------------------------------------------------------------*/
+
+// LoopExpression : If-else conditional expressions
+type LoopExpression struct {
+	Token     tok.Token // holds the [l] token
+	Condition Expression
+	LoopBody  *Block
+}
+
+func (l *LoopExpression) expressionNode() {}
+
+// TokenLiteral : IfExpression
+func (l *LoopExpression) TokenLiteral() string {
+	return l.Token.Literal
+}
+
+func (l *LoopExpression) String() string {
+	var str bytes.Buffer
+	str.WriteString("\nLOOP (begin) :")
+	str.WriteString("\nCONDITION : " + l.Condition.String())
+	str.WriteString("\nBODY (loop) :\n")
+	str.WriteString(l.LoopBody.String())
+	str.WriteString("\nLOOP (end)")
+	return str.String()
+}
+
+/*-------------------------------------------------------------------*/
