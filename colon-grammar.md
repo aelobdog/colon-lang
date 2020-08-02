@@ -1,22 +1,22 @@
 # Colon Programming Language
 
-## variable declaration
+### variable declaration
 
     v: var_name = value
 
-## return
+### return
 
     r: value
 
-## break
+### break
 
     b:
 
-## continue
+### continue
 
     c:
 
-## if condition
+### if condition
 
     i (condition) :
         <statement>
@@ -30,20 +30,20 @@ OR (with else)
         <statement>
     :e
 
-# loop
+### loop
 
     l (condition) :
         <statement>
     :l
 
-## function
+### function
 
     v: name = f (foo, bar, baz) :
     <statement>
     <statement>
     :f
 
-## function call
+### function call
 
     add(1 2 add(12 3))
     mul(12 + 2, add(12, 2) + 1)
