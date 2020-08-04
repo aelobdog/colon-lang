@@ -1,8 +1,10 @@
 package main
 
 import (
+	evl "colon/coleval"
 	lex "colon/collex"
 	par "colon/colparc"
+	"os"
 
 	// tol "colon/coltools"
 	"fmt"
@@ -10,32 +12,41 @@ import (
 
 func testLex() {
 	code := `
-	
+	5
+	true
+	!false
+	-21
+	12 + 14
+	12 - 14
+	12 * 14
+	12.0 / 14
+	1.5 + 3.6
+	"hello" + " " + "world!"
 	`
-	// interpret(code)
-	errors := interpret(code)
-
-	if len(errors) > 0 {
-		for _, v := range errors {
-			fmt.Println(v)
-		}
-	}
+	interpret(code)
 }
 
-func interpret(code string) []string {
+func interpret(code string) {
 	lexer := lex.CreateLexerState(code)
 	tokens := lexer.Lex()
-	// for _, v := range tokens {
-	// 	fmt.Println(v)
-	// }
 	parser := par.CreateParserState(tokens, lexer.SourceLines())
-	// parser.Parse()
-	temp := parser.Parse()
-	// fmt.Println(len(temp.Statements))
-	for _, v := range temp.Statements {
-		fmt.Println(v)
+	program := parser.Parse()
+	parseErrors := parser.ReportErrors()
+
+	if parseErrors[0] != "None" {
+		for _, v := range parseErrors {
+			fmt.Println(v)
+		}
+		os.Exit(22)
 	}
-	return parser.ReportErrors()
+
+	evl.Eval(program)
+
+	if evl.PostEvalOutput != nil {
+		for _, v := range evl.PostEvalOutput {
+			fmt.Println(v.ObValue())
+		}
+	}
 }
 
 func main() {

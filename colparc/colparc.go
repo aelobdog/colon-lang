@@ -255,25 +255,6 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 	}
 	p.advanceToken()
 	expression.RightExpression = p.parseExpression(PREFIX)
-	/*
-		type checking :
-		 	has [-] been used with numeric literals ?
-			has [!] been used with boolean literals ?
-	*/
-	if expression.Operator == "-" {
-		_, okIE := expression.RightExpression.(*ast.IntegerLiteral)
-		_, okFE := expression.RightExpression.(*ast.FloatingLiteral)
-		if !(okFE || okIE) {
-			// this will get executed when RightExpression is neither an integer literal nor a floating point literal
-			p.WrongDataTypeWithOperatorError("integer, floating point", "-")
-		}
-	} else if expression.Operator == "!" {
-		_, okBE := expression.RightExpression.(*ast.BooleanLiteral)
-		if !okBE {
-			// this will get executed when RightExpression is neither an integer literal nor a floating point literal
-			p.WrongDataTypeWithOperatorError("Boolean", "!")
-		}
-	}
 
 	return expression
 }
@@ -566,5 +547,5 @@ func (p *Parser) ReportErrors() []string {
 		// report = append(report, "\n")
 		return report
 	}
-	return []string{"No errors to report :)"}
+	return []string{"None"}
 }
