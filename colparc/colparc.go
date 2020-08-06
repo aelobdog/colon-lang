@@ -5,7 +5,6 @@ import (
 	tok "colon/coltok"
 	"fmt"
 	"strconv"
-	"strings"
 )
 
 // loc : To store the contents of the source file. For better error reporting
@@ -302,6 +301,7 @@ func (p *Parser) parseIfExpression() ast.Expression {
 		return nil
 	}
 	expression.IfBody = p.parseBlock(tok.IFE)
+	p.removeExtraNewLines()
 	if p.tokens[p.currentToken].TokType == tok.ELB {
 		if !p.NextTokenIs(tok.BLK) {
 			return nil
@@ -506,21 +506,21 @@ func (p *Parser) registerInfixFunc(toktype tok.TokenType, infixFunction infixFun
 // ExpectedTokenError : happens when the parser is expecting a particular token but recieves some other token
 func (p *Parser) ExpectedTokenError(et tok.TokenType) {
 	err := fmt.Sprintf("\nError on line %d : Expecting token of type %s but got %s instead", p.tokens[p.peekedToken].Line, et.String(), p.tokens[p.peekedToken].TokType.String())
-	err += "\n\n\t" + strings.TrimSpace(loc[p.tokens[p.currentToken].Line])
+	err += "\n\n\t" + loc[p.tokens[p.currentToken].Line]
 	p.errors = append(p.errors, err)
 }
 
 // ClosedParenMissingError : happens when an expression is missing a right parenthesis
 func (p *Parser) ClosedParenMissingError() {
 	err := fmt.Sprintf("\nError on line %d : Closing parenthesis ')' expected but not found.", p.tokens[p.currentToken].Line)
-	err += "\n\n\t" + loc[p.tokens[p.peekedToken].Line]
+	err += "\n\n\t" + loc[p.tokens[p.currentToken].Line]
 	p.errors = append(p.errors, err)
 }
 
 // LiteralConversionError : happens when parser is unable to convert a number to the intended target data-type
 func (p *Parser) LiteralConversionError(literal, target string) {
 	err := fmt.Sprintf("\nError on line %d : Could not parse %q as %q", p.tokens[p.currentToken].Line, literal, target)
-	err += "\n\n\t" + loc[p.tokens[p.peekedToken].Line]
+	err += "\n\n\t" + loc[p.tokens[p.currentToken].Line]
 	p.errors = append(p.errors, err)
 }
 
@@ -528,14 +528,14 @@ func (p *Parser) LiteralConversionError(literal, target string) {
 // for example, if the programmer has the expression -> (* 42) -> this makes no sense because '*' is not a valid prefix token
 func (p *Parser) UndefinedPrefixExpressionError(t tok.TokenType) {
 	err := fmt.Sprintf("\nError on line %d : %q is not a valid 'prefix' expression/token.", p.tokens[p.currentToken].Line, t.String())
-	err += "\n\n\t" + loc[p.tokens[p.peekedToken].Line]
+	err += "\n\n\t" + loc[p.tokens[p.currentToken].Line]
 	p.errors = append(p.errors, err)
 }
 
 // WrongDataTypeWithOperatorError : happens when an operator is used with operands that the operator does not operate on
 func (p *Parser) WrongDataTypeWithOperatorError(expected, operator string) {
 	err := fmt.Sprintf("\nError on line %d : Operator %q can be used with operands of type %s only.", p.tokens[p.currentToken].Line, operator, expected)
-	err += "\n\n\t" + loc[p.tokens[p.peekedToken].Line]
+	err += "\n\n\t" + loc[p.tokens[p.currentToken].Line]
 	p.errors = append(p.errors, err)
 }
 
