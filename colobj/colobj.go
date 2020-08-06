@@ -14,6 +14,7 @@ const (
 	FLOATING = "FLOATING"
 	STRING   = "STRING"
 	EMPTY    = "EMPTY"
+	RETVAL   = "RETURN_VALUE"
 )
 
 // Object : an interface that wraps values of all types which can be fed into the evaluator
@@ -103,6 +104,24 @@ func (e *Empty) ObValue() string {
 //ObType : Empty
 func (e *Empty) ObType() ObjectType {
 	return EMPTY
+}
+
+// ----------------------------------------------------------------------------
+
+// ReturnValue : structure that wraps the return value into an object so that
+// it can be returned as an object instead of just a value
+type ReturnValue struct {
+	Value Object
+}
+
+// ObValue : ReturnValue
+func (r *ReturnValue) ObValue() string {
+	return r.Value.ObValue()
+}
+
+// ObType : ReturnValue
+func (r *ReturnValue) ObType() ObjectType {
+	return RETVAL
 }
 
 // ----------------------------------------------------------------------------

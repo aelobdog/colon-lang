@@ -25,17 +25,15 @@ func testLex() {
 	// `
 
 	line := `
-	i(12 > 112): 
-		"greater than" 
-	:i e:
-		i(12 < 1):
-			"hello there"
-		:i 
+	i(12 > 2):
+		i(12 > 4):
+			r: 12
 		
-		e: 
-			"smaller than"
-		:e
-	:e`
+		
+		:i
+		r: 14
+	:i
+	`
 
 	interpret(line)
 }

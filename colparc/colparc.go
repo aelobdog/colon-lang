@@ -176,6 +176,7 @@ func (p *Parser) parseVarStatement() *ast.VarStatement {
 func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	statement := &ast.ReturnStatement{Token: p.tokens[p.currentToken]}
 	p.advanceToken()
+	p.advanceToken()
 	statement.ReturnValue = p.parseExpression(LOWEST)
 	if p.peekTokIs(tok.EOL) {
 		p.advanceToken()
@@ -186,6 +187,8 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	statement := &ast.ExpressionStatement{Token: p.tokens[p.currentToken]}
 	statement.Expression = p.parseExpression(LOWEST)
+	// fmt.Print("~~~>")
+	// fmt.Println(p.tokens[p.currentToken])
 	return statement
 }
 
@@ -242,6 +245,8 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 		return nil
 	}
 	leftExpression := prefix()
+	// fmt.Print("--->")
+	// fmt.Println(p.tokens[p.currentToken])
 	for !p.peekTokIs(tok.EOL) && precedence < p.peekPrecedence() {
 		infix := p.infixFunctions[p.tokens[p.peekedToken].TokType]
 		if infix == nil {
@@ -250,6 +255,8 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 		p.advanceToken()
 		leftExpression = infix(leftExpression)
 	}
+	// fmt.Print("===>")
+	// fmt.Println(p.tokens[p.currentToken])
 	return leftExpression
 }
 
@@ -301,13 +308,29 @@ func (p *Parser) parseIfExpression() ast.Expression {
 		return nil
 	}
 	expression.IfBody = p.parseBlock(tok.IFE)
-	p.removeExtraNewLines()
-	if p.tokens[p.currentToken].TokType == tok.ELB {
+
+	// ---------------------------------------------------------------------------------
+	// to take care of cases where else starts on the same line that if ends on :
+	if p.peekTokIs(tok.ELB) {
+		p.advanceToken()
 		if !p.NextTokenIs(tok.BLK) {
 			return nil
 		}
 		expression.ElseBody = p.parseBlock(tok.ELE)
+		// ---------------------------------------------------------------------------------
+	} else {
+		// to remove the extra EOLs that may exist after if's end & else's start
+		p.removeExtraNewLines()
+		// if there is an else after a bunch of new lines, it needs to be handled
+		if p.peekTokIs(tok.ELB) {
+			p.advanceToken()
+			if !p.NextTokenIs(tok.BLK) {
+				return nil
+			}
+			expression.ElseBody = p.parseBlock(tok.ELE)
+		}
 	}
+	// ---------------------------------------------------------------------------------
 	return expression
 }
 
@@ -325,8 +348,9 @@ func (p *Parser) parseBlock(endToken tok.TokenType) *ast.Block {
 		}
 		p.advanceToken()
 	}
-	p.advanceToken()
-
+	if p.peekTokIs(tok.EOL) {
+		p.advanceToken()
+	}
 	return block
 }
 
@@ -478,9 +502,9 @@ func (p *Parser) peekPrecedence() int {
 }
 
 func (p *Parser) removeExtraNewLines() {
-	for p.tokens[p.currentToken].TokType != tok.EOF &&
-		p.tokens[p.currentToken].TokType == tok.EOL &&
-		p.currentToken < len(p.tokens)-1 {
+	for p.currentToken < len(p.tokens)-1 &&
+		!p.peekTokIs(tok.EOF) &&
+		p.peekTokIs(tok.EOL) {
 		p.advanceToken()
 	}
 }
