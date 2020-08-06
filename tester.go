@@ -11,26 +11,40 @@ import (
 )
 
 func testLex() {
-	code := `
-	5
-	true
-	!false
-	-21
-	12 + 14
-	12 - 14
-	12 * 14
-	12.0 / 14
-	1.5 + 3.6
-	"hello" + " " + "world!"
-	`
-	interpret(code)
+	// code := `
+	// 5
+	// true
+	// !false
+	// -21
+	// 12 + 14
+	// 12 - 14
+	// 12 * 14
+	// 12.0 / 14
+	// 1.5 + 3.6
+	// "hello" + " " + "world!"
+	// `
+
+	line := `
+	i(12 > 112): 
+		"greater than" 
+	:i e:
+		"smaller than"
+	:e`
+
+	interpret(line)
 }
 
 func interpret(code string) {
 	lexer := lex.CreateLexerState(code)
 	tokens := lexer.Lex()
+	// for _, v := range tokens {
+	// 	fmt.Println(v)
+	// }
 	parser := par.CreateParserState(tokens, lexer.SourceLines())
 	program := parser.Parse()
+	// for _, v := range program.Statements {
+	// 	fmt.Println(v.String())
+	// }
 	parseErrors := parser.ReportErrors()
 
 	if parseErrors[0] != "None" {
@@ -40,13 +54,15 @@ func interpret(code string) {
 		os.Exit(22)
 	}
 
-	evl.Eval(program)
-
-	if evl.PostEvalOutput != nil {
-		for _, v := range evl.PostEvalOutput {
-			fmt.Println(v.ObValue())
-		}
+	res := evl.Eval(program)
+	if res != nil {
+		fmt.Println(res.ObValue())
 	}
+	// if evl.PostEvalOutput != nil {
+	// 	for _, v := range evl.PostEvalOutput {
+	// 		fmt.Println(v.ObValue())
+	// 	}
+	// }
 }
 
 func main() {

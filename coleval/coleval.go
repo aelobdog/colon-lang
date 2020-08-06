@@ -10,22 +10,19 @@ import (
 var (
 	booleanTrue  = &obj.Boolean{Value: true}
 	booleanFalse = &obj.Boolean{Value: false}
+	// EMPTY : the Null / Nil equivalent object in colon
+	EMPTY = &obj.Empty{}
 )
 
 // PostEvalOutput : contains the results of running the program
-var PostEvalOutput []obj.Object
+// var PostEvalOutput []obj.Object
 
 // Eval : evaluates the ast obtained after parsing
 func Eval(node ast.Node) obj.Object {
 	switch node := node.(type) {
 
 	case *ast.Program:
-		var res obj.Object
-		for _, statement := range node.Statements {
-			res = Eval(statement)
-			PostEvalOutput = append(PostEvalOutput, res)
-		}
-		return res
+		return evalStatements(node.Statements)
 
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression)
@@ -53,9 +50,24 @@ func Eval(node ast.Node) obj.Object {
 			return booleanTrue
 		}
 		return booleanFalse
-	}
 
+	case *ast.Block:
+		return evalStatements(node.Statements)
+
+	case *ast.IfExpression:
+		return evalIfExpression(node)
+
+	}
 	return nil
+}
+
+func evalStatements(statements []ast.Statement) obj.Object {
+	var res obj.Object
+	for _, statement := range statements {
+		res = Eval(statement)
+		// PostEvalOutput = append(PostEvalOutput, res)
+	}
+	return res
 }
 
 func evalPrefixExpression(operator string, rightExpression obj.Object) obj.Object {
@@ -65,8 +77,7 @@ func evalPrefixExpression(operator string, rightExpression obj.Object) obj.Objec
 	case "-":
 		return evalNumericNegation(rightExpression)
 	default:
-		fmt.Printf("Runtime Error : unknown prefix operation.\nOperator used => [ %v ]", operator)
-		os.Exit(22)
+		reportRuntimeError(fmt.Sprintf("unknown prefix operation.\nOperator used => [ %v ]", operator))
 	}
 	return nil
 }
@@ -78,20 +89,16 @@ func evalLogicalNotOf(rightExpression obj.Object) obj.Object {
 		return makeBooleanObject(!(rightExpression.(*obj.Boolean).Value))
 
 	default:
-		fmt.Printf("Runtime Error: cannot perform LOGICAL_NOT operation on type %q\n", rightExpression.ObType())
-		os.Exit(22)
+		reportRuntimeError(fmt.Sprintf("cannot perform LOGICAL_NOT operation on type %q\n", rightExpression.ObType()))
 	}
 	return nil
 }
 
 func makeBooleanObject(b bool) obj.Object {
-	switch b {
-	case true:
+	if b {
 		return booleanTrue
-	case false:
-		return booleanFalse
 	}
-	return nil
+	return booleanFalse
 }
 
 func evalNumericNegation(rightExpression obj.Object) obj.Object {
@@ -101,8 +108,7 @@ func evalNumericNegation(rightExpression obj.Object) obj.Object {
 	case obj.FLOATING:
 		return &obj.Floating{Value: -(rightExpression.(*obj.Floating).Value)}
 	default:
-		fmt.Printf("Runtime Error: cannot perform NUMERIC_NEGATION operation on type %q\n", rightExpression.ObType())
-		os.Exit(22)
+		reportRuntimeError(fmt.Sprintf("Runtime Error: cannot perform NUMERIC_NEGATION operation on type %q\n", rightExpression.ObType()))
 	}
 	return nil
 }
@@ -121,123 +127,183 @@ func evalInfixExpression(operator string, leftExpression obj.Object, rightExpres
 		return evalFltIntInfix(operator, leftExpression, rightExpression)
 	} else if leftExprType == obj.STRING && rightExprType == obj.STRING {
 		return evalStrStrInfix(operator, leftExpression, rightExpression)
+	} else if leftExprType == obj.BOOLEAN && rightExprType == obj.BOOLEAN {
+		return evalBolBolInfix(operator, leftExpression, rightExpression)
+	} else {
+		reportRuntimeError(fmt.Sprintf("illegal infix expression encountered. Operator that operates on %q and %q at not found", leftExprType, rightExprType))
 	}
 
 	return nil
 }
 
 func evalIntIntInfix(op string, l obj.Object, r obj.Object) obj.Object {
+	lVal := l.(*obj.Integer).Value
+	rVal := r.(*obj.Integer).Value
 	switch op {
 	case "+":
 		return &obj.Integer{
-			Value: l.(*obj.Integer).Value + r.(*obj.Integer).Value,
+			Value: lVal + rVal,
 		}
 	case "-":
 		return &obj.Integer{
-			Value: l.(*obj.Integer).Value - r.(*obj.Integer).Value,
+			Value: lVal - rVal,
 		}
 	case "*":
 		return &obj.Integer{
-			Value: l.(*obj.Integer).Value * r.(*obj.Integer).Value,
+			Value: lVal * rVal,
 		}
 	case "/":
 		return &obj.Integer{
-			Value: l.(*obj.Integer).Value / r.(*obj.Integer).Value,
+			Value: lVal / rVal,
 		}
 	case "%":
 		return &obj.Integer{
-			Value: l.(*obj.Integer).Value % r.(*obj.Integer).Value,
+			Value: lVal % rVal,
 		}
 	case "^":
 		var result int64 = 1
 		var i int64
-		for i = 0; i < r.(*obj.Integer).Value; i++ {
-			result = result * l.(*obj.Integer).Value
+		for i = 0; i < rVal; i++ {
+			result = result * lVal
 		}
 		return &obj.Integer{
 			Value: result,
 		}
+	case ">":
+		return makeBooleanObject(lVal > rVal)
+	case "<":
+		return makeBooleanObject(lVal < rVal)
+	case ">=":
+		return makeBooleanObject(lVal >= rVal)
+	case "<=":
+		return makeBooleanObject(lVal <= rVal)
+	case "==":
+		return makeBooleanObject(lVal == rVal)
+	case "!=":
+		return makeBooleanObject(lVal != rVal)
 	default:
-		fmt.Printf("Runtime Error : unknown operation performed.\nOperator used => [ %v ]", op)
+		reportRuntimeError(fmt.Sprintf("unknown operation performed.\nOperator used => [ %v ]", op))
 	}
 	return nil
 }
 
 func evalFltFltInfix(op string, l obj.Object, r obj.Object) obj.Object {
+	lVal := l.(*obj.Floating).Value
+	rVal := r.(*obj.Floating).Value
 	switch op {
 	case "+":
 		return &obj.Floating{
-			Value: l.(*obj.Floating).Value + r.(*obj.Floating).Value,
+			Value: lVal + rVal,
 		}
 	case "-":
 		return &obj.Floating{
-			Value: l.(*obj.Floating).Value - r.(*obj.Floating).Value,
+			Value: lVal - rVal,
 		}
 	case "*":
 		return &obj.Floating{
-			Value: l.(*obj.Floating).Value * r.(*obj.Floating).Value,
+			Value: lVal * rVal,
 		}
 	case "/":
 		return &obj.Floating{
-			Value: l.(*obj.Floating).Value / r.(*obj.Floating).Value,
+			Value: lVal / rVal,
 		}
+	case ">":
+		return makeBooleanObject(lVal > rVal)
+	case "<":
+		return makeBooleanObject(lVal < rVal)
+	case ">=":
+		return makeBooleanObject(lVal >= rVal)
+	case "<=":
+		return makeBooleanObject(lVal <= rVal)
+	case "==":
+		return makeBooleanObject(lVal == rVal)
+	case "!=":
+		return makeBooleanObject(lVal != rVal)
 	default:
-		fmt.Printf("Runtime Error : unknown operation performed.\nOperator used => [ %v ]", op)
+		reportRuntimeError(fmt.Sprintf("unknown operation performed.\nOperator used => [ %v ]", op))
 	}
 	return nil
 }
 
 func evalIntFltInfix(op string, l obj.Object, r obj.Object) obj.Object {
+	lVal := float64(l.(*obj.Integer).Value)
+	rVal := r.(*obj.Floating).Value
 	switch op {
 	case "+":
 		return &obj.Floating{
-			Value: float64(l.(*obj.Integer).Value) + r.(*obj.Floating).Value,
+			Value: lVal + rVal,
 		}
 	case "-":
 		return &obj.Floating{
-			Value: float64(l.(*obj.Integer).Value) - r.(*obj.Floating).Value,
+			Value: lVal - rVal,
 		}
 	case "*":
 		return &obj.Floating{
-			Value: float64(l.(*obj.Integer).Value) * r.(*obj.Floating).Value,
+			Value: lVal * rVal,
 		}
 	case "/":
 		return &obj.Floating{
-			Value: float64(l.(*obj.Integer).Value) / r.(*obj.Floating).Value,
+			Value: lVal / rVal,
 		}
+	case ">":
+		return makeBooleanObject(lVal > rVal)
+	case "<":
+		return makeBooleanObject(lVal < rVal)
+	case ">=":
+		return makeBooleanObject(lVal >= rVal)
+	case "<=":
+		return makeBooleanObject(lVal <= rVal)
+	case "==":
+		return makeBooleanObject(lVal == rVal)
+	case "!=":
+		return makeBooleanObject(lVal != rVal)
 	default:
-		fmt.Printf("Runtime Error : unknown operation performed.\nOperator used => [ %v ]", op)
+		reportRuntimeError(fmt.Sprintf("unknown operation performed.\nOperator used => [ %v ]", op))
 	}
 	return nil
 }
 
 func evalFltIntInfix(op string, l obj.Object, r obj.Object) obj.Object {
+	lVal := l.(*obj.Floating).Value
+	rVal := float64(r.(*obj.Integer).Value)
 	switch op {
 	case "+":
 		return &obj.Floating{
-			Value: l.(*obj.Floating).Value + float64(r.(*obj.Integer).Value),
+			Value: lVal + rVal,
 		}
 	case "-":
 		return &obj.Floating{
-			Value: l.(*obj.Floating).Value - float64(r.(*obj.Integer).Value),
+			Value: lVal - rVal,
 		}
 	case "*":
 		return &obj.Floating{
-			Value: l.(*obj.Floating).Value * float64(r.(*obj.Integer).Value),
+			Value: lVal * rVal,
 		}
 	case "/":
 		return &obj.Floating{
-			Value: l.(*obj.Floating).Value / float64(r.(*obj.Integer).Value),
+			Value: lVal / rVal,
 		}
+	case ">":
+		return makeBooleanObject(lVal > rVal)
+	case "<":
+		return makeBooleanObject(lVal < rVal)
+	case ">=":
+		return makeBooleanObject(lVal >= rVal)
+	case "<=":
+		return makeBooleanObject(lVal <= rVal)
+	case "==":
+		return makeBooleanObject(lVal == rVal)
+	case "!=":
+		return makeBooleanObject(lVal != rVal)
 	default:
-		fmt.Printf("Runtime Error : unknown operation performed.\nOperator used => [ %v ]", op)
+		reportRuntimeError(fmt.Sprintf("unknown operation performed.\nOperator used => [ %v ]", op))
 	}
 	return nil
 }
 
 func evalStrStrInfix(op string, l obj.Object, r obj.Object) obj.Object {
 	if op != "+" {
-		fmt.Printf("Runtime Error : Cannot use this operator on string operands.\nOperator used => [ %v ]", op)
+		reportRuntimeError(fmt.Sprintf("cannot use this operator on string operands.\nOperator used => [ %v ]", op))
 	}
 	return &obj.String{
 		Value: l.(*obj.String).Value + r.(*obj.String).Value,
@@ -267,4 +333,39 @@ func getBolValueFromObj(object obj.Object) bool {
 
 func getStrValueFromObj(object obj.Object) string {
 	return object.(*obj.String).Value
+}
+
+func evalIfExpression(ife *ast.IfExpression) obj.Object {
+	condition := Eval(ife.Condition)
+	if condition.ObType() != obj.BOOLEAN {
+		reportRuntimeError(fmt.Sprintf("Condition does not evaluate to `true` or `false`"))
+	}
+	if getBolValueFromObj(condition) {
+		return Eval(ife.IfBody)
+	} else if ife.ElseBody != nil {
+		return Eval(ife.ElseBody)
+	} else {
+		return EMPTY
+	}
+}
+
+func reportRuntimeError(msg string) {
+	fmt.Printf("Runtime Error: %s", msg)
+	os.Exit(22)
+}
+
+func evalBolBolInfix(op string, l obj.Object, r obj.Object) obj.Object {
+	switch op {
+	case "==":
+		return makeBooleanObject(l == r)
+	case "!=":
+		return makeBooleanObject(l != r)
+	case "&":
+		return makeBooleanObject(getBolValueFromObj(l) && getBolValueFromObj(r))
+	case "|":
+		return makeBooleanObject(getBolValueFromObj(l) || getBolValueFromObj(r))
+	default:
+		reportRuntimeError(fmt.Sprintf("operator %q cannot operator on BOOLEAN values", op))
+	}
+	return nil
 }

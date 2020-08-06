@@ -21,6 +21,7 @@ type (
 const (
 	LOWEST       int = iota
 	ASSIGNMENT       // Assignment operator (currently [+=, -=, *=, /=, %=, ^=] are not supported)
+	LOGICAL          // All relational operators have equal precedence (and no short-circuiting) [&, |]
 	COMPARISON       // All relational operators have equal precendence [==, >=, <=, >, <]
 	SIMPLEARITH      // Addition and Subtraction have equal precedence [+, -]
 	COMPLEXARITH     // Multiplication, Division and Remainder have equal precedence [*, /, %]
@@ -46,6 +47,9 @@ var precedenceTable = map[tok.TokenType]int{
 	tok.POW: POWER,
 	// function call operator
 	tok.LPR: FCALL,
+	// logical operators
+	tok.LND: LOGICAL,
+	tok.LOR: LOGICAL,
 }
 
 // Parser : Current state of the parser
@@ -94,6 +98,8 @@ func CreateParserState(toks []tok.Token, locs []string) *Parser {
 	p.registerInfixFunc(tok.DIV, p.parseInfixExpression)
 	p.registerInfixFunc(tok.REM, p.parseInfixExpression)
 	p.registerInfixFunc(tok.POW, p.parseInfixExpression)
+	p.registerInfixFunc(tok.LND, p.parseInfixExpression)
+	p.registerInfixFunc(tok.LOR, p.parseInfixExpression)
 	p.registerInfixFunc(tok.LPR, p.parseFunctionCall)
 
 	return p
@@ -426,7 +432,7 @@ func (p *Parser) currTokIs(tokType tok.TokenType) bool {
 	if p.currentToken <= len(p.tokens)-1 {
 		return p.tokens[p.currentToken].TokType == tokType
 	}
-	fmt.Println("Exceeded token length")
+	//fmt.Println("Exceeded token length")
 	return false
 }
 
@@ -435,7 +441,7 @@ func (p *Parser) peekTokIs(tokType tok.TokenType) bool {
 	if p.currentToken <= len(p.tokens)-2 {
 		return p.tokens[p.peekedToken].TokType == tokType
 	}
-	fmt.Println("Exceeded token length")
+	//fmt.Println("Exceeded token length")
 	return false
 }
 

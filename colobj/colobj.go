@@ -7,11 +7,13 @@ import "fmt"
 // ObjectType : type of "object" that a particular node in the ast produces at runtime
 type ObjectType string
 
+// Datatypes in Colon
 const (
 	INTEGER  = "INTEGER"
 	BOOLEAN  = "BOOLEAN"
 	FLOATING = "FLOATING"
 	STRING   = "STRING"
+	EMPTY    = "EMPTY"
 )
 
 // Object : an interface that wraps values of all types which can be fed into the evaluator
@@ -86,6 +88,21 @@ func (s *String) ObValue() string {
 // ObType : String
 func (s *String) ObType() ObjectType {
 	return STRING
+}
+
+// ----------------------------------------------------------------------------
+
+// Empty : Colon's version of Null/Nil.
+type Empty struct{}
+
+// ObValue : Empty
+func (e *Empty) ObValue() string {
+	return ""
+}
+
+//ObType : Empty
+func (e *Empty) ObType() ObjectType {
+	return EMPTY
 }
 
 // ----------------------------------------------------------------------------
