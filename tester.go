@@ -3,6 +3,7 @@ package main
 import (
 	evl "colon/coleval"
 	lex "colon/collex"
+	obj "colon/colobj"
 	par "colon/colparc"
 	"os"
 
@@ -25,20 +26,19 @@ func testLex() {
 	// `
 
 	line := `
-	i(12 > 2):
-		i(12 > 4):
-			r: 12
-		
-		
-		:i
-		r: 14
-	:i
+	v: hello_world = i(42 == 42): 52 :i
 	`
 
-	interpret(line)
+	line1 := "hello_world"
+
+	env := obj.NewEnv()
+
+	interpret(line, env)
+	interpret(line1, env)
+
 }
 
-func interpret(code string) {
+func interpret(code string, env *obj.Env) {
 	lexer := lex.CreateLexerState(code)
 	tokens := lexer.Lex()
 	// for _, v := range tokens {
@@ -58,7 +58,9 @@ func interpret(code string) {
 		os.Exit(22)
 	}
 
-	res := evl.Eval(program)
+	// env := obj.NewEnv()
+
+	res := evl.Eval(program, env)
 	if res != nil {
 		fmt.Println(res.ObValue())
 	}

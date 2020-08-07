@@ -7,6 +7,7 @@ import (
 	"os"
 )
 
+// Storing values that are reused frequently
 var (
 	booleanTrue  = &obj.Boolean{Value: true}
 	booleanFalse = &obj.Boolean{Value: false}
@@ -18,23 +19,23 @@ var (
 // var PostEvalOutput []obj.Object
 
 // Eval : evaluates the ast obtained after parsing
-func Eval(node ast.Node) obj.Object {
+func Eval(node ast.Node, env *obj.Env) obj.Object {
 	switch node := node.(type) {
 
 	case *ast.Program:
-		return evalProgram(node)
+		return evalProgram(node, env)
 
 	case *ast.ExpressionStatement:
-		return Eval(node.Expression)
+		return Eval(node.Expression, env)
 
 	case *ast.PrefixExpression:
-		rightExpression := Eval(node.RightExpression)
-		return evalPrefixExpression(node.Operator, rightExpression)
+		rightExpression := Eval(node.RightExpression, env)
+		return evalPrefixExpression(node.Operator, rightExpression, env)
 
 	case *ast.InfixExpression:
-		leftExpression := Eval(node.LeftExpression)
-		rightExpression := Eval(node.RightExpression)
-		return evalInfixExpression(node.Operator, leftExpression, rightExpression)
+		leftExpression := Eval(node.LeftExpression, env)
+		rightExpression := Eval(node.RightExpression, env)
+		return evalInfixExpression(node.Operator, leftExpression, rightExpression, env)
 
 	case *ast.IntegerLiteral:
 		return &obj.Integer{Value: node.Value}
@@ -52,22 +53,33 @@ func Eval(node ast.Node) obj.Object {
 		return booleanFalse
 
 	case *ast.Block:
-		return evalBlock(node)
+		return evalBlock(node, env)
 
 	case *ast.IfExpression:
-		return evalIfExpression(node)
+		return evalIfExpression(node, env)
 
 	case *ast.ReturnStatement:
-		retVal := Eval(node.ReturnValue)
+		retVal := Eval(node.ReturnValue, env)
 		return &obj.ReturnValue{Value: retVal}
+
+	case *ast.VarStatement:
+		varVal := Eval(node.Value, env)
+		if varVal == EMPTY {
+			reportRuntimeError(fmt.Sprintf("expression assigned to variable %q did not evaluate value of a legal datatype", node.Name.Value))
+		}
+		env.Set(node.Name.Value, varVal)
+
+	case *ast.Identifier:
+		return evalIdentifier(node, env)
+
 	}
 	return nil
 }
 
-func evalProgram(program *ast.Program) obj.Object {
+func evalProgram(program *ast.Program, env *obj.Env) obj.Object {
 	var res obj.Object
 	for _, statement := range program.Statements {
-		res = Eval(statement)
+		res = Eval(statement, env)
 		// PostEvalOutput = append(PostEvalOutput, res)
 		if retVal, ok := res.(*obj.ReturnValue); ok {
 			return retVal.Value
@@ -76,31 +88,34 @@ func evalProgram(program *ast.Program) obj.Object {
 	return res
 }
 
-func evalBlock(block *ast.Block) obj.Object {
+func evalBlock(block *ast.Block, env *obj.Env) obj.Object {
 	var res obj.Object
 	for _, statement := range block.Statements {
-		res = Eval(statement)
+		res = Eval(statement, env)
 		// PostEvalOutput = append(PostEvalOutput, res)
 		if res != nil && res.ObType() == obj.RETVAL {
 			return res
 		}
 	}
+	if res == nil {
+		return EMPTY
+	}
 	return res
 }
 
-func evalPrefixExpression(operator string, rightExpression obj.Object) obj.Object {
+func evalPrefixExpression(operator string, rightExpression obj.Object, env *obj.Env) obj.Object {
 	switch operator {
 	case "!":
-		return evalLogicalNotOf(rightExpression)
+		return evalLogicalNotOf(rightExpression, env)
 	case "-":
-		return evalNumericNegation(rightExpression)
+		return evalNumericNegation(rightExpression, env)
 	default:
 		reportRuntimeError(fmt.Sprintf("unknown prefix operation.\nOperator used => [ %v ]", operator))
 	}
 	return nil
 }
 
-func evalLogicalNotOf(rightExpression obj.Object) obj.Object {
+func evalLogicalNotOf(rightExpression obj.Object, env *obj.Env) obj.Object {
 	switch rightExpression.ObType() {
 
 	case obj.BOOLEAN:
@@ -119,34 +134,34 @@ func makeBooleanObject(b bool) obj.Object {
 	return booleanFalse
 }
 
-func evalNumericNegation(rightExpression obj.Object) obj.Object {
+func evalNumericNegation(rightExpression obj.Object, env *obj.Env) obj.Object {
 	switch rightExpression.ObType() {
 	case obj.INTEGER:
 		return &obj.Integer{Value: -(rightExpression.(*obj.Integer).Value)}
 	case obj.FLOATING:
 		return &obj.Floating{Value: -(rightExpression.(*obj.Floating).Value)}
 	default:
-		reportRuntimeError(fmt.Sprintf("Runtime Error: cannot perform NUMERIC_NEGATION operation on type %q\n", rightExpression.ObType()))
+		reportRuntimeError(fmt.Sprintf("cannot perform NUMERIC_NEGATION operation on type %q\n", rightExpression.ObType()))
 	}
 	return nil
 }
 
-func evalInfixExpression(operator string, leftExpression obj.Object, rightExpression obj.Object) obj.Object {
+func evalInfixExpression(operator string, leftExpression obj.Object, rightExpression obj.Object, env *obj.Env) obj.Object {
 	leftExprType := leftExpression.ObType()
 	rightExprType := rightExpression.ObType()
 
 	if leftExprType == obj.INTEGER && rightExprType == obj.INTEGER {
-		return evalIntIntInfix(operator, leftExpression, rightExpression)
+		return evalIntIntInfix(operator, leftExpression, rightExpression, env)
 	} else if leftExprType == obj.FLOATING && rightExprType == obj.FLOATING {
-		return evalFltFltInfix(operator, leftExpression, rightExpression)
+		return evalFltFltInfix(operator, leftExpression, rightExpression, env)
 	} else if leftExprType == obj.INTEGER && rightExprType == obj.FLOATING {
-		return evalIntFltInfix(operator, leftExpression, rightExpression)
+		return evalIntFltInfix(operator, leftExpression, rightExpression, env)
 	} else if leftExprType == obj.FLOATING && rightExprType == obj.INTEGER {
-		return evalFltIntInfix(operator, leftExpression, rightExpression)
+		return evalFltIntInfix(operator, leftExpression, rightExpression, env)
 	} else if leftExprType == obj.STRING && rightExprType == obj.STRING {
-		return evalStrStrInfix(operator, leftExpression, rightExpression)
+		return evalStrStrInfix(operator, leftExpression, rightExpression, env)
 	} else if leftExprType == obj.BOOLEAN && rightExprType == obj.BOOLEAN {
-		return evalBolBolInfix(operator, leftExpression, rightExpression)
+		return evalBolBolInfix(operator, leftExpression, rightExpression, env)
 	} else {
 		reportRuntimeError(fmt.Sprintf("illegal infix expression encountered. Operator that operates on %q and %q at not found", leftExprType, rightExprType))
 	}
@@ -154,7 +169,7 @@ func evalInfixExpression(operator string, leftExpression obj.Object, rightExpres
 	return nil
 }
 
-func evalIntIntInfix(op string, l obj.Object, r obj.Object) obj.Object {
+func evalIntIntInfix(op string, l obj.Object, r obj.Object, env *obj.Env) obj.Object {
 	lVal := l.(*obj.Integer).Value
 	rVal := r.(*obj.Integer).Value
 	switch op {
@@ -205,7 +220,7 @@ func evalIntIntInfix(op string, l obj.Object, r obj.Object) obj.Object {
 	return nil
 }
 
-func evalFltFltInfix(op string, l obj.Object, r obj.Object) obj.Object {
+func evalFltFltInfix(op string, l obj.Object, r obj.Object, env *obj.Env) obj.Object {
 	lVal := l.(*obj.Floating).Value
 	rVal := r.(*obj.Floating).Value
 	switch op {
@@ -243,7 +258,7 @@ func evalFltFltInfix(op string, l obj.Object, r obj.Object) obj.Object {
 	return nil
 }
 
-func evalIntFltInfix(op string, l obj.Object, r obj.Object) obj.Object {
+func evalIntFltInfix(op string, l obj.Object, r obj.Object, env *obj.Env) obj.Object {
 	lVal := float64(l.(*obj.Integer).Value)
 	rVal := r.(*obj.Floating).Value
 	switch op {
@@ -281,7 +296,7 @@ func evalIntFltInfix(op string, l obj.Object, r obj.Object) obj.Object {
 	return nil
 }
 
-func evalFltIntInfix(op string, l obj.Object, r obj.Object) obj.Object {
+func evalFltIntInfix(op string, l obj.Object, r obj.Object, env *obj.Env) obj.Object {
 	lVal := l.(*obj.Floating).Value
 	rVal := float64(r.(*obj.Integer).Value)
 	switch op {
@@ -319,22 +334,13 @@ func evalFltIntInfix(op string, l obj.Object, r obj.Object) obj.Object {
 	return nil
 }
 
-func evalStrStrInfix(op string, l obj.Object, r obj.Object) obj.Object {
+func evalStrStrInfix(op string, l obj.Object, r obj.Object, env *obj.Env) obj.Object {
 	if op != "+" {
 		reportRuntimeError(fmt.Sprintf("cannot use this operator on string operands.\nOperator used => [ %v ]", op))
 	}
 	return &obj.String{
 		Value: l.(*obj.String).Value + r.(*obj.String).Value,
 	}
-}
-
-func contains(arr []obj.ObjectType, typ obj.ObjectType) bool {
-	for _, v := range arr {
-		if v == typ {
-			return true
-		}
-	}
-	return false
 }
 
 func getIntValueFromObj(object obj.Object) int64 {
@@ -353,26 +359,26 @@ func getStrValueFromObj(object obj.Object) string {
 	return object.(*obj.String).Value
 }
 
-func evalIfExpression(ife *ast.IfExpression) obj.Object {
-	condition := Eval(ife.Condition)
+func evalIfExpression(ife *ast.IfExpression, env *obj.Env) obj.Object {
+	condition := Eval(ife.Condition, env)
 	if condition.ObType() != obj.BOOLEAN {
 		reportRuntimeError(fmt.Sprintf("Condition does not evaluate to `true` or `false`"))
 	}
 	if getBolValueFromObj(condition) {
-		return Eval(ife.IfBody)
+		return Eval(ife.IfBody, env)
 	} else if ife.ElseBody != nil {
-		return Eval(ife.ElseBody)
+		return Eval(ife.ElseBody, env)
 	} else {
 		return EMPTY
 	}
 }
 
 func reportRuntimeError(msg string) {
-	fmt.Printf("Runtime Error: %s", msg)
+	fmt.Printf("Runtime Error: %s\n", msg)
 	os.Exit(22)
 }
 
-func evalBolBolInfix(op string, l obj.Object, r obj.Object) obj.Object {
+func evalBolBolInfix(op string, l obj.Object, r obj.Object, env *obj.Env) obj.Object {
 	switch op {
 	case "==":
 		return makeBooleanObject(l == r)
@@ -386,4 +392,12 @@ func evalBolBolInfix(op string, l obj.Object, r obj.Object) obj.Object {
 		reportRuntimeError(fmt.Sprintf("operator %q cannot operator on BOOLEAN values", op))
 	}
 	return nil
+}
+
+func evalIdentifier(identifier *ast.Identifier, env *obj.Env) obj.Object {
+	boundVal, ok := env.Get(identifier.Value)
+	if !ok {
+		reportRuntimeError(fmt.Sprintf("variable %q not initialized. Cannot use uninitialized variables in expressions", identifier.Value))
+	}
+	return boundVal
 }
