@@ -16,14 +16,14 @@ func main() {
 
 	v: sumToNumRec = f(num):
 		i(num == 1):
-			r: 1
+			1
 		:i e:
-			r: num + sumToNumRec(num - 1)
+			num + sumToNumRec(num - 1)
 		:e
 	:f
 
 	v: num = 5
-	
+
 	v: sumL = sumToNumLoop(num)
 	print(sumL)
 	v: sumR = sumToNumRec(num)
