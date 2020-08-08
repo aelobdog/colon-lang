@@ -95,9 +95,18 @@ func Eval(node ast.Node, env *obj.Env) obj.Object {
 		if function == EMPTY {
 			reportRuntimeError(fmt.Sprintf("function %q not found.", node.Function.String()))
 		}
+		if function.ObType() == obj.INPUT {
+			var arguments []obj.Object
+			for _, v := range node.Arguments {
+				arguments = append(arguments, &obj.String{Value: v.String()})
+			}
+			return evalFunction(arguments, function, env)
+		}
+
 		arguments := evalExpressions(node.Arguments, env)
+		return evalFunction(arguments, function, env)
+
 		// i'm hoping that evalExpressions catches all the runtime errors
-		return evalFunction(arguments, function)
 
 	case *ast.LoopExpression:
 		// condition := node.Condition
@@ -448,6 +457,15 @@ func evalIdentifier(identifier *ast.Identifier, env *obj.Env) obj.Object {
 	if bin, ok := builtin[identifier.Value]; ok {
 		return bin
 	}
+	// if bin, ok := builtinTypeAssociations[identifier.Value]; ok {
+	// 	return bin
+	// }
+	if identifier.Value == "input" {
+		return &obj.InputFunction{
+			InFunc: GetInput,
+			ENV:    env,
+		}
+	}
 	reportRuntimeError(fmt.Sprintf("variable %q not initialized. Cannot use uninitialized variables in expressions", identifier.Value))
 	return nil
 }
@@ -464,7 +482,7 @@ func evalExpressions(args []ast.Expression, env *obj.Env) []obj.Object {
 	return evaluatedEArgs
 }
 
-func evalFunction(arguments []obj.Object, function obj.Object) obj.Object {
+func evalFunction(arguments []obj.Object, function obj.Object, env *obj.Env) obj.Object {
 	switch funct := function.(type) {
 	case *obj.Function:
 		functEnv := createNewSubEnv(arguments, funct)
@@ -472,6 +490,15 @@ func evalFunction(arguments []obj.Object, function obj.Object) obj.Object {
 		return unwrapRetVal(evaluatedFunct)
 	case *obj.BuiltIn:
 		return funct.Bfunct(arguments...)
+	case *obj.InputFunction:
+		if len(arguments) == 2 {
+			if dtype, ok := builtinTypeAssociations[arguments[1].ObValue()].(*obj.DataType); ok {
+				return funct.InFunc(env, arguments[0].ObValue(), *dtype)
+			} else {
+				reportRuntimeError(fmt.Sprintf("datatype %q is not registered as a valid dataype in colon", dtype.Dtype))
+			}
+		}
+		reportRuntimeError("the input function takes exactly 2 arguments")
 	default:
 		reportRuntimeError(fmt.Sprintf("expression %q is not/ doesn't have a valid funcion definition", function.ObValue()))
 	}

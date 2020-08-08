@@ -1,0 +1,5 @@
+v: hello = 0
+print("input : ")
+input(hello, flt)
+print("You entered : ")
+print(hello)

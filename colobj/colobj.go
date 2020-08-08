@@ -22,6 +22,7 @@ const (
 	FUNCTION = "FUNCTION"
 	LOOP     = "LOOP"
 	BUILTIN  = "BUILT_IN"
+	INPUT    = "INPUT"
 )
 
 // Object : an interface that wraps values of all types which can be fed into the evaluator
@@ -205,6 +206,41 @@ func (bin *BuiltIn) ObValue() string {
 
 // ObType : BuiltIn
 func (bin *BuiltIn) ObType() ObjectType {
+	return BUILTIN
+}
+
+// ----------------------------------------------------------------------------
+
+// InputFunction : to provide a way to get user input from stdin
+type InputFunction struct {
+	InFunc func(env *Env, varname string, dtype DataType) Object
+	ENV    *Env
+}
+
+// ObValue : InputFunction
+func (bin *InputFunction) ObValue() string {
+	return "Builtin Function"
+}
+
+// ObType : InputFunction
+func (bin *InputFunction) ObType() ObjectType {
+	return INPUT
+}
+
+// ----------------------------------------------------------------------------
+
+//DataType : To encode Datatype information; mainly required by the input function
+type DataType struct {
+	Dtype string
+}
+
+// ObValue : DataType
+func (dt *DataType) ObValue() string {
+	return "DATA-TYPE"
+}
+
+// ObType : DataType
+func (dt *DataType) ObType() ObjectType {
 	return BUILTIN
 }
 
