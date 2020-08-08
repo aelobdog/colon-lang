@@ -15,13 +15,11 @@ func testLex() {
 	env := obj.NewEnv()
 
 	line := `
-	v: hello = f(word):
-		i(word == "hello"):
-			word + " world!"
-		:i
+	v: addTwo = f(num):
+		r: num + 2
 	:f
 
-	hello("hello")
+	print(addTwo(5))
 	`
 	interpret(line, env)
 	// interpret(line1, env)
@@ -40,20 +38,19 @@ func interpret(code string, env *obj.Env) {
 	// 	fmt.Println(v.String())
 	// }
 	parseErrors := parser.ReportErrors()
-
 	if parseErrors[0] != "None" {
 		for _, v := range parseErrors {
 			fmt.Println(v)
 		}
 		os.Exit(22)
 	}
-
+	evl.Eval(program, env)
 	// env := obj.NewEnv()
 
-	res := evl.Eval(program, env)
-	if res != nil {
-		fmt.Println(res.ObValue())
-	}
+	// res := evl.Eval(program, env)
+	// if res != nil {
+	// 	fmt.Println(res.ObValue())
+	// }
 	// if evl.PostEvalOutput != nil {
 	// 	for _, v := range evl.PostEvalOutput {
 	// 		fmt.Println(v.ObValue())

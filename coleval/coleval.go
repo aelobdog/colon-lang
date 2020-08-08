@@ -422,11 +422,14 @@ func evalBolBolInfix(op string, l obj.Object, r obj.Object, env *obj.Env) obj.Ob
 }
 
 func evalIdentifier(identifier *ast.Identifier, env *obj.Env) obj.Object {
-	boundVal, ok := env.Get(identifier.Value)
-	if !ok {
-		reportRuntimeError(fmt.Sprintf("variable %q not initialized. Cannot use uninitialized variables in expressions", identifier.Value))
+	if boundVal, ok := env.Get(identifier.Value); ok {
+		return boundVal
 	}
-	return boundVal
+	if bin, ok := builtin[identifier.Value]; ok {
+		return bin
+	}
+	reportRuntimeError(fmt.Sprintf("variable %q not initialized. Cannot use uninitialized variables in expressions", identifier.Value))
+	return nil
 }
 
 func evalExpressions(args []ast.Expression, env *obj.Env) []obj.Object {
@@ -442,13 +445,17 @@ func evalExpressions(args []ast.Expression, env *obj.Env) []obj.Object {
 }
 
 func evalFunction(arguments []obj.Object, function obj.Object) obj.Object {
-	funct, ok := function.(*obj.Function)
-	if !ok {
+	switch funct := function.(type) {
+	case *obj.Function:
+		functEnv := createNewSubEnv(arguments, funct)
+		evaluatedFunct := Eval(funct.FuncBody, functEnv)
+		return unwrapRetValFromFunction(evaluatedFunct)
+	case *obj.BuiltIn:
+		return funct.Bfunct(arguments...)
+	default:
 		reportRuntimeError(fmt.Sprintf("expression %q is not/ doesn't have a valid funcion definition", function.ObValue()))
 	}
-	functEnv := createNewSubEnv(arguments, funct)
-	evaluatedFunct := Eval(funct.FuncBody, functEnv)
-	return unwrapRetValFromFunction(evaluatedFunct)
+	return nil
 }
 
 // creates a "scope" for the function being called.

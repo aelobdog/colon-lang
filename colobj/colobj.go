@@ -20,6 +20,7 @@ const (
 	EMPTY    = "EMPTY"
 	RETVAL   = "RETURN_VALUE"
 	FUNCTION = "FUNCTION"
+	BUILTIN  = "BUILT_IN"
 )
 
 // Object : an interface that wraps values of all types which can be fed into the evaluator
@@ -155,6 +156,30 @@ func (f *Function) ObValue() string {
 // ObType : Function
 func (f *Function) ObType() ObjectType {
 	return FUNCTION
+}
+
+// ----------------------------------------------------------------------------
+
+// BuiltInFunction : a type of function which is built
+// into the colon interpreter
+type BuiltInFunction func(args ...Object) Object
+
+// ----------------------------------------------------------------------------
+
+// BuiltIn : to provide a warpper around some
+// functions that are built into the colon interpreter
+type BuiltIn struct {
+	Bfunct BuiltInFunction
+}
+
+// ObValue : BuiltIn
+func (bin *BuiltIn) ObValue() string {
+	return "Builtin Function"
+}
+
+// ObType : BuiltIn
+func (bin *BuiltIn) ObType() ObjectType {
+	return BUILTIN
 }
 
 // ----------------------------------------------------------------------------
