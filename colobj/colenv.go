@@ -2,20 +2,35 @@ package colobj
 
 // Env : container for variables' and functions' bindings
 type Env struct {
-	bindings map[string]Object
+	bindings    map[string]Object
+	containedIn *Env
 }
 
 // NewEnv : constructs and returns a new Env
 func NewEnv() *Env {
 	bind := make(map[string]Object)
-	return &Env{bindings: bind}
+	return &Env{
+		bindings:    bind,
+		containedIn: nil,
+	}
 }
 
-// Get : to retrieve the value bound to a name from the env,
-// (also, if the name hasn't been bound to any value yet,
-// Get() returns an err)
+// NewInnerEnv : constructs a new enviroment within an existing enviroment
+func NewInnerEnv(extern *Env) *Env {
+	newEnv := NewEnv()
+	newEnv.containedIn = extern
+	return newEnv
+}
+
+// Get : to retrieve the value bound to a name from an env. If no binding
+// is found, it checks if the current environment is contained within
+// another environment. If it is, it looks for a binding to that same
+// name as earlier.
 func (e *Env) Get(name string) (Object, bool) {
 	val, ok := e.bindings[name]
+	if !ok && e.containedIn != nil {
+		val, ok = e.containedIn.Get(name)
+	}
 	return val, ok
 }
 

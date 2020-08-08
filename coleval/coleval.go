@@ -72,6 +72,23 @@ func Eval(node ast.Node, env *obj.Env) obj.Object {
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
 
+	case *ast.FunctionExpression:
+		params := node.Params
+		body := node.FuncBody
+		return &obj.Function{
+			Parameters: params,
+			FuncBody:   body,
+			Env:        env,
+		}
+
+	case *ast.FunctionCallExpression:
+		function := Eval(node.Function, env)
+		if function == EMPTY {
+			reportRuntimeError(fmt.Sprintf("function %q not found.", node.Function.String()))
+		}
+		arguments := evalExpressions(node.Arguments, env)
+		// i'm hoping that evalExpressions catches all the runtime errors
+		return evalFunction(arguments, function)
 	}
 	return nil
 }
@@ -335,12 +352,22 @@ func evalFltIntInfix(op string, l obj.Object, r obj.Object, env *obj.Env) obj.Ob
 }
 
 func evalStrStrInfix(op string, l obj.Object, r obj.Object, env *obj.Env) obj.Object {
-	if op != "+" {
+	if op == "+" {
+		return &obj.String{
+			Value: l.(*obj.String).Value + r.(*obj.String).Value,
+		}
+	} else if op == "==" {
+		return &obj.Boolean{
+			Value: l.(*obj.String).Value == r.(*obj.String).Value,
+		}
+	} else if op == "!=" {
+		return &obj.Boolean{
+			Value: l.(*obj.String).Value == r.(*obj.String).Value,
+		}
+	} else {
 		reportRuntimeError(fmt.Sprintf("cannot use this operator on string operands.\nOperator used => [ %v ]", op))
 	}
-	return &obj.String{
-		Value: l.(*obj.String).Value + r.(*obj.String).Value,
-	}
+	return nil
 }
 
 func getIntValueFromObj(object obj.Object) int64 {
@@ -400,4 +427,44 @@ func evalIdentifier(identifier *ast.Identifier, env *obj.Env) obj.Object {
 		reportRuntimeError(fmt.Sprintf("variable %q not initialized. Cannot use uninitialized variables in expressions", identifier.Value))
 	}
 	return boundVal
+}
+
+func evalExpressions(args []ast.Expression, env *obj.Env) []obj.Object {
+	evaluatedEArgs := []obj.Object{}
+	for _, v := range args {
+		ev := Eval(v, env)
+		// Not sure if there are any potential errors that can occur here
+		if ev != nil {
+			evaluatedEArgs = append(evaluatedEArgs, ev)
+		}
+	}
+	return evaluatedEArgs
+}
+
+func evalFunction(arguments []obj.Object, function obj.Object) obj.Object {
+	funct, ok := function.(*obj.Function)
+	if !ok {
+		reportRuntimeError(fmt.Sprintf("expression %q is not/ doesn't have a valid funcion definition", function.ObValue()))
+	}
+	functEnv := createNewSubEnv(arguments, funct)
+	evaluatedFunct := Eval(funct.FuncBody, functEnv)
+	return unwrapRetValFromFunction(evaluatedFunct)
+}
+
+// creates a "scope" for the function being called.
+// this allows for creation of "local variables", i.e.,
+// variables that are local to the function
+func createNewSubEnv(arguments []obj.Object, function *obj.Function) *obj.Env {
+	functEnv := obj.NewInnerEnv(function.Env)
+	for k, v := range function.Parameters {
+		functEnv.Set(v.Value, arguments[k])
+	}
+	return functEnv
+}
+
+func unwrapRetValFromFunction(functEvalResult obj.Object) obj.Object {
+	if retval, ok := functEvalResult.(*obj.ReturnValue); ok {
+		return retval.Value
+	}
+	return functEvalResult
 }

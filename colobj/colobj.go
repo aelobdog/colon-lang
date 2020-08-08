@@ -1,6 +1,10 @@
 package colobj
 
-import "fmt"
+import (
+	"bytes"
+	ast "colon/colast"
+	"fmt"
+)
 
 // At runtime, every node from the ast will be wrapped into an equivalent "object" for the evaluator
 
@@ -15,6 +19,7 @@ const (
 	STRING   = "STRING"
 	EMPTY    = "EMPTY"
 	RETVAL   = "RETURN_VALUE"
+	FUNCTION = "FUNCTION"
 )
 
 // Object : an interface that wraps values of all types which can be fed into the evaluator
@@ -122,6 +127,34 @@ func (r *ReturnValue) ObValue() string {
 // ObType : ReturnValue
 func (r *ReturnValue) ObType() ObjectType {
 	return RETVAL
+}
+
+// ----------------------------------------------------------------------------
+
+// Function : structure that wraps function definitions
+type Function struct {
+	Parameters []*ast.Identifier
+	FuncBody   *ast.Block
+	Env        *Env // functions have their own environment
+}
+
+// ObValue : Function
+func (f *Function) ObValue() string {
+	var str bytes.Buffer
+	str.WriteString("FUNCTION {\n(")
+	for _, v := range f.Parameters {
+		str.WriteString(v.String())
+		str.WriteString(", ")
+	}
+	str.WriteString(")\n")
+	str.WriteString(f.FuncBody.String())
+	str.WriteString("}")
+	return str.String()
+}
+
+// ObType : Function
+func (f *Function) ObType() ObjectType {
+	return FUNCTION
 }
 
 // ----------------------------------------------------------------------------

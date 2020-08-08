@@ -12,29 +12,19 @@ import (
 )
 
 func testLex() {
-	// code := `
-	// 5
-	// true
-	// !false
-	// -21
-	// 12 + 14
-	// 12 - 14
-	// 12 * 14
-	// 12.0 / 14
-	// 1.5 + 3.6
-	// "hello" + " " + "world!"
-	// `
-
-	line := `
-	v: hello_world = i(42 == 42): 52 :i
-	`
-
-	line1 := "hello_world"
-
 	env := obj.NewEnv()
 
+	line := `
+	v: hello = f(word):
+		i(word == "hello"):
+			word + " world!"
+		:i
+	:f
+
+	hello("hello")
+	`
 	interpret(line, env)
-	interpret(line1, env)
+	// interpret(line1, env)
 
 }
 
