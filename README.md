@@ -10,6 +10,6 @@ Colon is an _experimental_ project. It is highly unstable and incomplete as of n
 ```
 Lexer : [==========]
 Parser: [========  ]
-Eval  : [===       ]
+Eval  : [========  ]
 REPL  : [===       ]
 ```
