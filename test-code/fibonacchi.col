@@ -1,5 +1,31 @@
-v: hello = 0
-print("input : ")
-input(hello, flt)
-print("You entered : ")
-print(hello)
+v: num = 0
+input(num, int)
+
+v: fibNth = f(num):
+    i(num == 1):
+        r: 0
+    :i e:
+        i(num == 2):
+            r: 1
+        :i
+    :e
+    
+    v: fst = 0
+    v: sec = 1
+    v: trd = 1
+    v: iter = 3
+
+    l(iter <= num):
+        v: trd = fst + sec
+        v: fst = sec
+        v: sec = trd
+        v: iter = iter + 1
+    :l
+    r: trd
+:f
+
+v: iter = 1
+l(iter <= num):
+    print(fibNth(iter))
+    v: iter = iter + 1
+:l
