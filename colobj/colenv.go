@@ -3,7 +3,7 @@ package colobj
 // Env : container for variables' and functions' bindings
 type Env struct {
 	bindings    map[string]Object
-	containedIn *Env
+	ContainedIn *Env
 }
 
 // NewEnv : constructs and returns a new Env
@@ -11,14 +11,14 @@ func NewEnv() *Env {
 	bind := make(map[string]Object)
 	return &Env{
 		bindings:    bind,
-		containedIn: nil,
+		ContainedIn: nil,
 	}
 }
 
 // NewInnerEnv : constructs a new enviroment within an existing enviroment
 func NewInnerEnv(extern *Env) *Env {
 	newEnv := NewEnv()
-	newEnv.containedIn = extern
+	newEnv.ContainedIn = extern
 	return newEnv
 }
 
@@ -28,8 +28,8 @@ func NewInnerEnv(extern *Env) *Env {
 // name as earlier.
 func (e *Env) Get(name string) (Object, bool) {
 	val, ok := e.bindings[name]
-	if !ok && e.containedIn != nil {
-		val, ok = e.containedIn.Get(name)
+	if !ok && e.ContainedIn != nil {
+		val, ok = e.ContainedIn.Get(name)
 	}
 	return val, ok
 }
@@ -40,4 +40,14 @@ func (e *Env) Get(name string) (Object, bool) {
 func (e *Env) Set(name string, val Object) Object {
 	e.bindings[name] = val
 	return val
+}
+
+// IsInside : To find out if the current environment is embedded in another
+// environment, which happens when evaluation goes inside of functions or
+// loops
+func (e *Env) IsInside() bool {
+	if e.ContainedIn == nil {
+		return false
+	}
+	return true
 }

@@ -20,6 +20,7 @@ const (
 	EMPTY    = "EMPTY"
 	RETVAL   = "RETURN_VALUE"
 	FUNCTION = "FUNCTION"
+	LOOP     = "LOOP"
 	BUILTIN  = "BUILT_IN"
 )
 
@@ -156,6 +157,31 @@ func (f *Function) ObValue() string {
 // ObType : Function
 func (f *Function) ObType() ObjectType {
 	return FUNCTION
+}
+
+// ----------------------------------------------------------------------------
+
+// Loop : structure that wraps loop statements
+type Loop struct {
+	Condition ast.Expression
+	LoopBody  *ast.Block
+	Env       *Env // loops also have their own environment
+}
+
+// ObValue : Function
+func (l *Loop) ObValue() string {
+	var str bytes.Buffer
+	str.WriteString("Loop {\n(")
+	str.WriteString("I'm working on getting the condition to print here")
+	str.WriteString(")\n")
+	str.WriteString(l.LoopBody.String())
+	str.WriteString("}")
+	return str.String()
+}
+
+// ObType : Function
+func (l *Loop) ObType() ObjectType {
+	return LOOP
 }
 
 // ----------------------------------------------------------------------------

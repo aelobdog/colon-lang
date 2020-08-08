@@ -19,7 +19,6 @@ type (
 // Operator precedence / Binding power values
 const (
 	LOWEST       int = iota
-	ASSIGNMENT       // Assignment operator (currently [+=, -=, *=, /=, %=, ^=] are not supported)
 	LOGICAL          // All relational operators have equal precedence (and no short-circuiting) [&, |]
 	COMPARISON       // All relational operators have equal precendence [==, >=, <=, >, <]
 	SIMPLEARITH      // Addition and Subtraction have equal precedence [+, -]
@@ -139,6 +138,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseVarStatement()
 	case tok.RET:
 		return p.parseReturnStatement()
+	// case tok.BRK:
+	// 	return
 	case tok.EOL:
 		return nil
 	default:

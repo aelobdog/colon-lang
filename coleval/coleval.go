@@ -15,8 +15,9 @@ var (
 	EMPTY = &obj.Empty{}
 )
 
-// PostEvalOutput : contains the results of running the program
-// var PostEvalOutput []obj.Object
+// to know whether the evaluation happening at any moment is
+// inside a loop or not
+var inLoop bool = false
 
 // Eval : evaluates the ast obtained after parsing
 func Eval(node ast.Node, env *obj.Env) obj.Object {
@@ -65,9 +66,17 @@ func Eval(node ast.Node, env *obj.Env) obj.Object {
 	case *ast.VarStatement:
 		varVal := Eval(node.Value, env)
 		if varVal == EMPTY {
-			reportRuntimeError(fmt.Sprintf("expression assigned to variable %q did not evaluate value of a legal datatype", node.Name.Value))
+			reportRuntimeError(fmt.Sprintf("expression assigned to variable %q did not evaluate to a value of a legal datatype", node.Name.Value))
 		}
-		env.Set(node.Name.Value, varVal)
+		if inLoop && env.IsInside() {
+			if _, inOuter := env.ContainedIn.Get(node.Name.Value); inOuter {
+				env.ContainedIn.Set(node.Name.Value, varVal)
+			} else {
+				env.Set(node.Name.Value, varVal)
+			}
+		} else {
+			env.Set(node.Name.Value, varVal)
+		}
 
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
@@ -89,6 +98,17 @@ func Eval(node ast.Node, env *obj.Env) obj.Object {
 		arguments := evalExpressions(node.Arguments, env)
 		// i'm hoping that evalExpressions catches all the runtime errors
 		return evalFunction(arguments, function)
+
+	case *ast.LoopExpression:
+		// condition := node.Condition
+		// body := node.LoopBody
+		// loopObj := &obj.Loop{
+		// 	Condition: condition,
+		// 	LoopBody: body,
+		// 	Env: env,
+		// }
+		return evalLoopExpression(node, env)
+
 	}
 	return nil
 }
@@ -449,7 +469,7 @@ func evalFunction(arguments []obj.Object, function obj.Object) obj.Object {
 	case *obj.Function:
 		functEnv := createNewSubEnv(arguments, funct)
 		evaluatedFunct := Eval(funct.FuncBody, functEnv)
-		return unwrapRetValFromFunction(evaluatedFunct)
+		return unwrapRetVal(evaluatedFunct)
 	case *obj.BuiltIn:
 		return funct.Bfunct(arguments...)
 	default:
@@ -469,9 +489,35 @@ func createNewSubEnv(arguments []obj.Object, function *obj.Function) *obj.Env {
 	return functEnv
 }
 
-func unwrapRetValFromFunction(functEvalResult obj.Object) obj.Object {
-	if retval, ok := functEvalResult.(*obj.ReturnValue); ok {
+func unwrapRetVal(EvalResult obj.Object) obj.Object {
+	if retval, ok := EvalResult.(*obj.ReturnValue); ok {
 		return retval.Value
 	}
-	return functEvalResult
+	return EvalResult
+}
+
+// @experimental
+func evalLoopExpression(le *ast.LoopExpression, env *obj.Env) obj.Object {
+	var loopResult obj.Object
+	loopEnv := obj.NewInnerEnv(env)
+	condition := Eval(le.Condition, loopEnv)
+	if condition.ObType() != obj.BOOLEAN {
+		reportRuntimeError(fmt.Sprintf("Condition does not evaluate to `true` or `false`"))
+	}
+
+	// to signify that the evaluation is going inside a loop
+	inLoop = true
+
+	for getBolValueFromObj(condition) {
+		loopResult = Eval(le.LoopBody, loopEnv)
+		condition = Eval(le.Condition, loopEnv)
+		if condition.ObType() != obj.BOOLEAN {
+			reportRuntimeError(fmt.Sprintf("Condition does not evaluate to `true` or `false`"))
+		}
+	}
+
+	// to signify that the evaluation has come out of a loop
+	inLoop = false
+
+	return unwrapRetVal(loopResult)
 }
