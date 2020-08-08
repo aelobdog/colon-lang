@@ -11,8 +11,7 @@ Eval  : [========  ]
 REPL  : [===       ]
 ```
 
-### TODO : 
-+ add support for arrays
-+ make a functioning REPL ?
-+ separate the interpret function into its own file
-+ generate documentation and add examples
+### TODO :
+
+- add support for arrays
+- generate documentation and add examples
