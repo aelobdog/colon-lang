@@ -395,3 +395,58 @@ func (l *LoopExpression) String() string {
 }
 
 /*-------------------------------------------------------------------*/
+
+// Array : To represent array literals
+type Array struct {
+	Token    tok.Token
+	Elements []Expression
+}
+
+func (a *Array) expressionNode() {}
+
+// TokenLiteral : Array
+func (a *Array) TokenLiteral() string {
+	return a.Token.Literal
+}
+
+func (a *Array) String() string {
+	var str bytes.Buffer
+	str.WriteString("Array : [ ")
+	for _, v := range a.Elements {
+		str.WriteString(v.String() + ", ")
+	}
+	str.WriteString(" ]")
+	return str.String()
+}
+
+/*-------------------------------------------------------------------*/
+
+// ArrayIndexExpression : expressions extracting a value at a particular
+// index from an array
+type ArrayIndexExpression struct {
+	Token tok.Token // the [ token in an index operation
+	// name of the array, or something that evaluates too an array
+	LeftExpression Expression
+	// an expression that is exclusively evaluates to an integer that
+	// is the index of the element that the programmer wishes to extract
+	Index Expression
+}
+
+func (ain *ArrayIndexExpression) expressionNode() {}
+
+// TokenLiteral : ArrayIndexExpression
+func (ain *ArrayIndexExpression) TokenLiteral() string {
+	return ain.Token.Literal
+}
+
+func (ain *ArrayIndexExpression) String() string {
+	var str bytes.Buffer
+	str.WriteString("(")
+	str.WriteString(ain.LeftExpression.String())
+	str.WriteString("[-> ")
+	str.WriteString(ain.Index.String())
+	str.WriteString(" <-])")
+	return str.String()
+}
+
+/*-------------------------------------------------------------------*/

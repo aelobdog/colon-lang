@@ -17,6 +17,7 @@ const (
 	BOOLEAN  = "BOOLEAN"
 	FLOATING = "FLOATING"
 	STRING   = "STRING"
+	LIST     = "LIST"
 	EMPTY    = "EMPTY"
 	RETVAL   = "RETURN_VALUE"
 	FUNCTION = "FUNCTION"
@@ -242,6 +243,29 @@ func (dt *DataType) ObValue() string {
 // ObType : DataType
 func (dt *DataType) ObType() ObjectType {
 	return BUILTIN
+}
+
+// ----------------------------------------------------------------------------
+
+// List : structure that wraps a list into an object
+type List struct {
+	Elements []Object
+}
+
+// ObValue : ReturnValue
+func (l *List) ObValue() string {
+	var str bytes.Buffer
+	str.WriteString("[")
+	for _, v := range l.Elements {
+		str.WriteString(v.ObValue() + ", ")
+	}
+	str.WriteString("]")
+	return str.String()
+}
+
+// ObType : ReturnValue
+func (l *List) ObType() ObjectType {
+	return LIST
 }
 
 // ----------------------------------------------------------------------------

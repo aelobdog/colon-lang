@@ -26,9 +26,20 @@ const (
 	POWER            // To the power of, or multiply be self [n] times
 	PREFIX           // Unary prefix operators have the equal precedence [!, -]
 	FCALL            // Function calls
+	INDEX            // Array indexing operation has the highest preference because array elements may be functions.
 )
 
 var precedenceTable = map[tok.TokenType]int{
+	// array indexing operator
+	tok.LSB: INDEX,
+
+	// function call operator
+	tok.LPR: FCALL,
+
+	// logical operators
+	tok.LND: LOGICAL,
+	tok.LOR: LOGICAL,
+
 	// relational operators
 	tok.EQL: COMPARISON,
 	tok.NEQ: COMPARISON,
@@ -36,6 +47,7 @@ var precedenceTable = map[tok.TokenType]int{
 	tok.GRT: COMPARISON,
 	tok.LSE: COMPARISON,
 	tok.GRE: COMPARISON,
+
 	// arithmetic operators
 	tok.PLS: SIMPLEARITH,
 	tok.MIN: SIMPLEARITH,
@@ -43,11 +55,6 @@ var precedenceTable = map[tok.TokenType]int{
 	tok.PRD: COMPLEXARITH,
 	tok.REM: COMPLEXARITH,
 	tok.POW: POWER,
-	// function call operator
-	tok.LPR: FCALL,
-	// logical operators
-	tok.LND: LOGICAL,
-	tok.LOR: LOGICAL,
 }
 
 // Parser : Current state of the parser
@@ -82,6 +89,7 @@ func CreateParserState(toks []tok.Token, locs []string) *Parser {
 	p.registerPrefixFunc(tok.IFB, p.parseIfExpression)
 	p.registerPrefixFunc(tok.FNB, p.parseFunctionExpression)
 	p.registerPrefixFunc(tok.LPB, p.parseLoopStatement)
+	p.registerPrefixFunc(tok.LSB, p.parseArray)
 
 	// registering all the valid INFIX tokens
 	p.registerInfixFunc(tok.EQL, p.parseInfixExpression)
@@ -99,6 +107,7 @@ func CreateParserState(toks []tok.Token, locs []string) *Parser {
 	p.registerInfixFunc(tok.LND, p.parseInfixExpression)
 	p.registerInfixFunc(tok.LOR, p.parseInfixExpression)
 	p.registerInfixFunc(tok.LPR, p.parseFunctionCall)
+	p.registerInfixFunc(tok.LSB, p.parseArrayIndexExpression)
 
 	return p
 }
@@ -446,6 +455,41 @@ func (p *Parser) parseLoopStatement() ast.Expression {
 	}
 	loopExpression.LoopBody = p.parseBlock(tok.LPE)
 	return loopExpression
+}
+
+func (p *Parser) parseArray() ast.Expression {
+	array := &ast.Array{
+		Token:    p.tokens[p.currentToken],
+		Elements: []ast.Expression{},
+	}
+	if p.peekTokIs(tok.RSB) {
+		p.advanceToken()
+		return array
+	}
+	p.advanceToken()
+	array.Elements = append(array.Elements, p.parseExpression(LOWEST))
+	for p.peekTokIs(tok.COM) {
+		p.advanceToken()
+		p.advanceToken()
+		array.Elements = append(array.Elements, p.parseExpression(LOWEST))
+	}
+	if !p.NextTokenIs(tok.RSB) {
+		return nil
+	}
+	return array
+}
+
+func (p *Parser) parseArrayIndexExpression(leftExpr ast.Expression) ast.Expression {
+	arrIndExp := &ast.ArrayIndexExpression{
+		Token:          p.tokens[p.currentToken],
+		LeftExpression: leftExpr,
+	}
+	p.advanceToken() // skipping over the [ Token
+	arrIndExp.Index = p.parseExpression(LOWEST)
+	if !p.NextTokenIs(tok.RSB) {
+		return nil
+	}
+	return arrIndExp
 }
 
 /* --------------------------------------------------------------------------

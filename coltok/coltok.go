@@ -12,6 +12,8 @@ const (
 
 	LPR // LEFT PARENTHESIS
 	RPR // RIGHT PARENTHESIS
+	LSB // LEFT SQUARE BRACKET
+	RSB // RIGHT SQUARE BRACKET
 
 	PLS // PLUS
 	MIN // MINUS
@@ -43,7 +45,6 @@ const (
 	IFE // IF END
 	ELB // ELSE BEGIN
 	ELE // ELSE END
-	SLP // SLEEP
 	LPB // LOOP BEGIN
 	LPE // LOOP END
 	FNB // FUNCTION BEGIN
@@ -121,24 +122,26 @@ func (t TokenType) String() string {
 		return "BEGIN: ELSE"
 	case ELE:
 		return "END: ELSE"
-	case SLP:
-		return "SLP"
 	case LPB:
 		return "LPB"
 	case LPE:
 		return "LPE"
 	case FNB:
-		return "FNB"
+		return "BEGIN: FUNCTION"
 	case FNE:
-		return "FNE"
+		return "END FUNCTION"
 	case RET:
-		return "RET"
+		return "RETURN"
 	case BRK:
 		return "BRK"
 	case CNT:
 		return "CNT"
 	case COM:
 		return "COMMA"
+	case LSB:
+		return "LEFT SQ BRACKET"
+	case RSB:
+		return "RIGHT SQ BRACKET"
 	case EOF:
 		return "EOF"
 	case EOL:
@@ -158,7 +161,7 @@ var Keywords map[string]TokenType = map[string]TokenType{
 	":i": IFE,
 	"e":  ELB,
 	":e": ELE,
-	"w":  SLP,
+	// "w":  SLP,
 	"l":  LPB,
 	":l": LPE,
 	"f":  FNB,

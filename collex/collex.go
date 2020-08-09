@@ -73,6 +73,10 @@ func (l *Lexer) NextToken() tok.Token {
 		token = tok.NewToken(tok.LPR, string(l.Ch), l.line)
 	case ')':
 		token = tok.NewToken(tok.RPR, string(l.Ch), l.line)
+	case '[':
+		token = tok.NewToken(tok.LSB, string(l.Ch), l.line)
+	case ']':
+		token = tok.NewToken(tok.RSB, string(l.Ch), l.line)
 	case '=':
 		if l.PeekChar() == '=' {
 			token = tok.NewToken(tok.EQL, "==", l.line)

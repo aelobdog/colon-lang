@@ -109,15 +109,27 @@ func Eval(node ast.Node, env *obj.Env) obj.Object {
 		// i'm hoping that evalExpressions catches all the runtime errors
 
 	case *ast.LoopExpression:
-		// condition := node.Condition
-		// body := node.LoopBody
-		// loopObj := &obj.Loop{
-		// 	Condition: condition,
-		// 	LoopBody: body,
-		// 	Env: env,
-		// }
 		return evalLoopExpression(node, env)
 
+	case *ast.Array:
+		elements := evalExpressions(node.Elements, env)
+		return &obj.List{
+			Elements: elements,
+		}
+
+	case *ast.ArrayIndexExpression:
+		leftExpression := Eval(node.LeftExpression, env)
+		index := Eval(node.Index, env)
+		if index, iok := index.(*obj.Integer); iok && index.Value >= 0 {
+			if list, ok := leftExpression.(*obj.List); ok {
+				if index.Value >= int64(len(list.Elements)) {
+					reportRuntimeError(fmt.Sprintf("cannot extract element a index '%v' from a list with '%v' elements", index.Value, len(list.Elements)))
+				}
+				return list.Elements[index.Value]
+			}
+			reportRuntimeError(fmt.Sprintf("cannot extract element from non-list expression"))
+		}
+		reportRuntimeError(fmt.Sprintf("index is not a non-negative integer"))
 	}
 	return nil
 }
