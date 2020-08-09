@@ -2,15 +2,6 @@
 
 Colon is a _dynamically typed_, _interpreted_ (toy) programming language
 
-### PROGRESS
-
-```
-Lexer : [==========]
-Parser: [==========]
-Eval  : [========  ]
-REPL  : [===       ]
-```
-
 ### TODO :
 
 - generate documentation and add examples
