@@ -21,6 +21,10 @@ var builtin = map[string]*obj.BuiltIn{
 				return &obj.Integer{
 					Value: int64(len(arg.Value)),
 				}
+			case *obj.List:
+				return &obj.Integer{
+					Value: int64(len(arg.Elements)),
+				}
 			default:
 				reportRuntimeError(fmt.Sprintf("len cannot operate of type %q.", args[0].ObType()))
 			}
@@ -40,6 +44,110 @@ var builtin = map[string]*obj.BuiltIn{
 				fmt.Println(v.ObValue())
 			}
 			return EMPTY
+		},
+	},
+
+	"head": {
+		Bfunct: func(args ...obj.Object) obj.Object {
+			if len(args) != 1 {
+				reportRuntimeError(fmt.Sprintf("head takes only 1 argument, got %v", len(args)))
+			}
+			switch arg := args[0].(type) {
+			case *obj.String:
+				if len(arg.Value) < 1 {
+					reportRuntimeError("cannot take the head of an empty string")
+				}
+				return &obj.String{
+					Value: string(arg.Value[0]),
+				}
+			case *obj.List:
+				if len(arg.Elements) < 1 {
+					reportRuntimeError("cannot take the head of an empty list")
+				}
+				return arg.Elements[0]
+			default:
+				reportRuntimeError(fmt.Sprintf("head cannot operate of type %q.", args[0].ObType()))
+			}
+			return nil
+		},
+	},
+
+	"last": {
+		Bfunct: func(args ...obj.Object) obj.Object {
+			if len(args) != 1 {
+				reportRuntimeError(fmt.Sprintf("last takes only 1 argument, got %v", len(args)))
+			}
+			switch arg := args[0].(type) {
+			case *obj.String:
+				if len(arg.Value) < 1 {
+					reportRuntimeError("cannot take the last of an empty string")
+				}
+				return &obj.String{
+					Value: string(arg.Value[len(arg.Value)-1]),
+				}
+			case *obj.List:
+				if len(arg.Elements) < 1 {
+					reportRuntimeError("cannot take the last of an empty list")
+				}
+				return arg.Elements[len(arg.Elements)-1]
+			default:
+				reportRuntimeError(fmt.Sprintf("last cannot operate of type %q.", args[0].ObType()))
+			}
+			return nil
+		},
+	},
+
+	"tail": {
+		Bfunct: func(args ...obj.Object) obj.Object {
+			if len(args) != 1 {
+				reportRuntimeError(fmt.Sprintf("tail takes only 1 argument, got %v", len(args)))
+			}
+			switch arg := args[0].(type) {
+			case *obj.List:
+				if len(arg.Elements) < 1 {
+					reportRuntimeError("cannot take the tail of an empty list")
+				}
+				tail := obj.List{
+					Elements: []obj.Object{},
+				}
+				if len(arg.Elements) == 1 {
+					return &tail
+				}
+				for k := 1; k < len((arg.Elements)); k++ {
+					tail.Elements = append(tail.Elements, arg.Elements[k])
+				}
+				return &tail
+			default:
+				reportRuntimeError(fmt.Sprintf("tail cannot operate of type %q.", args[0].ObType()))
+			}
+			return nil
+		},
+	},
+
+	"init": {
+		Bfunct: func(args ...obj.Object) obj.Object {
+			if len(args) != 1 {
+				reportRuntimeError(fmt.Sprintf("init takes only 1 argument, got %v", len(args)))
+			}
+			switch arg := args[0].(type) {
+			case *obj.List:
+				if len(arg.Elements) < 1 {
+					reportRuntimeError("cannot take the init of an empty list")
+				}
+				init := obj.List{
+					Elements: []obj.Object{},
+				}
+				if len(arg.Elements) == 1 {
+					return &init
+				}
+				for k := 0; k < len((arg.Elements))-1; k++ {
+					init.Elements = append(init.Elements, arg.Elements[k])
+				}
+				return &init
+			default:
+				reportRuntimeError(fmt.Sprintf("init cannot operate of type %q.", args[0].ObType()))
+			}
+			return nil
 		},
 	},
 }

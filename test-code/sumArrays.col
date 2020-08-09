@@ -1,1 +1,2 @@
-print([1, 2*2, 3, "hello, world!"][3 - 2 + 1])
+v: firstArray = [1, 2, 3]
+print("init is : ", init(init(init(firstArray))))
