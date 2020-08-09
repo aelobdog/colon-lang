@@ -130,6 +130,7 @@ func Eval(node ast.Node, env *obj.Env) obj.Object {
 			reportRuntimeError(fmt.Sprintf("cannot extract element from non-list expression"))
 		}
 		reportRuntimeError(fmt.Sprintf("index is not a non-negative integer"))
+
 	}
 	return nil
 }
@@ -552,7 +553,6 @@ func unwrapRetVal(EvalResult obj.Object) obj.Object {
 	return EvalResult
 }
 
-// @experimental
 func evalLoopExpression(le *ast.LoopExpression, env *obj.Env) obj.Object {
 	var loopResult obj.Object
 	loopEnv := obj.NewInnerEnv(env)

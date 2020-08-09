@@ -48,8 +48,6 @@ const (
 	FNB // FUNCTION BEGIN
 	FNE // FUNCTION END
 	RET // RETURN
-	BRK // BREAK
-	CNT // CONTINUE
 
 	BLK // BLOCK
 	EOL // END OF LINE
@@ -126,10 +124,6 @@ func (t TokenType) String() string {
 		return "END FUNCTION"
 	case RET:
 		return "RETURN"
-	case BRK:
-		return "BRK"
-	case CNT:
-		return "CNT"
 	case COM:
 		return "COMMA"
 	case LSB:
@@ -153,14 +147,11 @@ var Keywords map[string]TokenType = map[string]TokenType{
 	":i": IFE,
 	"e":  ELB,
 	":e": ELE,
-	// "w":  SLP,
 	"l":  LPB,
 	":l": LPE,
 	"f":  FNB,
 	":f": FNE,
 	"r":  RET,
-	"b":  BRK,
-	"c":  CNT,
 }
 
 // Token : properties
