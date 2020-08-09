@@ -4,6 +4,7 @@ import (
 	"bytes"
 	ast "colon/colast"
 	"fmt"
+	"strings"
 )
 
 // At runtime, every node from the ast will be wrapped into an equivalent "object" for the evaluator
@@ -256,9 +257,11 @@ type List struct {
 func (l *List) ObValue() string {
 	var str bytes.Buffer
 	str.WriteString("[")
+	elems := []string{}
 	for _, v := range l.Elements {
-		str.WriteString(v.ObValue() + ", ")
+		elems = append(elems, v.ObValue())
 	}
+	str.WriteString(strings.Join(elems, ", "))
 	str.WriteString("]")
 	return str.String()
 }

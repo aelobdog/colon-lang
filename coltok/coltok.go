@@ -38,8 +38,6 @@ const (
 
 	IDN // IDENTIFIER
 
-	PRN // PRINT
-	INP // INPUT
 	VAR // VARIABLE
 	IFB // IF BEGIN
 	IFE // IF END
@@ -108,10 +106,6 @@ func (t TokenType) String() string {
 		return "LOGICAL_NOT"
 	case IDN:
 		return "IDENTIFIER"
-	case PRN:
-		return "PRINT"
-	case INP:
-		return "INPUT"
 	case VAR:
 		return "VARIABLE"
 	case IFB:
@@ -154,8 +148,6 @@ func (t TokenType) String() string {
 
 // Keywords map
 var Keywords map[string]TokenType = map[string]TokenType{
-	"p":  PRN,
-	"n":  INP,
 	"v":  VAR,
 	"i":  IFB,
 	":i": IFE,

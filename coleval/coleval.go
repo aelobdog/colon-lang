@@ -220,6 +220,8 @@ func evalInfixExpression(operator string, leftExpression obj.Object, rightExpres
 		return evalStrStrInfix(operator, leftExpression, rightExpression, env)
 	} else if leftExprType == obj.BOOLEAN && rightExprType == obj.BOOLEAN {
 		return evalBolBolInfix(operator, leftExpression, rightExpression, env)
+	} else if leftExprType == obj.LIST && rightExprType == obj.LIST {
+		return evalLstLstInfix(operator, leftExpression, rightExpression, env)
 	} else {
 		reportRuntimeError(fmt.Sprintf("illegal infix expression encountered. Operator that operates on %q and %q at not found", leftExprType, rightExprType))
 	}
@@ -407,6 +409,21 @@ func evalStrStrInfix(op string, l obj.Object, r obj.Object, env *obj.Env) obj.Ob
 		}
 	} else {
 		reportRuntimeError(fmt.Sprintf("cannot use this operator on string operands.\nOperator used => [ %v ]", op))
+	}
+	return nil
+}
+
+func evalLstLstInfix(op string, l obj.Object, r obj.Object, env *obj.Env) obj.Object {
+	ll := l.(*obj.List)
+	rl := r.(*obj.List)
+	switch op {
+	case "+":
+		newList := append(ll.Elements, rl.Elements...)
+		return &obj.List{
+			Elements: newList,
+		}
+	default:
+		reportRuntimeError(fmt.Sprintf("cannot use this operator on list operands.\nOperator used => [ %v ]", op))
 	}
 	return nil
 }

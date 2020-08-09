@@ -150,6 +150,55 @@ var builtin = map[string]*obj.BuiltIn{
 			return nil
 		},
 	},
+
+	"isNull": {
+		Bfunct: func(args ...obj.Object) obj.Object {
+			if len(args) != 1 {
+				reportRuntimeError(fmt.Sprintf("isNull takes only 1 argument, got %v", len(args)))
+			}
+			switch arg := args[0].(type) {
+			case *obj.List:
+				if len(arg.Elements) == 0 {
+					return &obj.Boolean{Value: true}
+				}
+				return &obj.Boolean{Value: false}
+			default:
+				reportRuntimeError(fmt.Sprintf("isNull cannot operate of type %q.", args[0].ObType()))
+			}
+			return nil
+		},
+	},
+
+	"push": {
+		Bfunct: func(args ...obj.Object) obj.Object {
+			if len(args) == 1 {
+				reportRuntimeError("push takes a minimum of 3 arguments: a list and an element")
+			}
+			switch arg := args[0].(type) {
+			case *obj.List:
+				for k := 1; k < len(args); k++ {
+					if _, ok := args[k].(*obj.Integer); ok {
+						arg.Elements = append(arg.Elements, args[k].(*obj.Integer))
+					} else if _, ok := args[k].(*obj.Floating); ok {
+						arg.Elements = append(arg.Elements, args[k].(*obj.Floating))
+					} else if _, ok := args[k].(*obj.Boolean); ok {
+						arg.Elements = append(arg.Elements, args[k].(*obj.Boolean))
+					} else if _, ok := args[k].(*obj.String); ok {
+						arg.Elements = append(arg.Elements, args[k].(*obj.String))
+					} else if _, ok := args[k].(*obj.List); ok {
+						arg.Elements = append(arg.Elements, args[k].(*obj.List))
+					} else {
+						reportRuntimeError(fmt.Sprintf("cannot push element of type %q into a list", args[k].ObType()))
+					}
+					// check if adding arrays is possible
+				}
+				return EMPTY
+			default:
+				reportRuntimeError(fmt.Sprintf("push cannot operate of type %q.", args[0].ObType()))
+			}
+			return nil
+		},
+	},
 }
 
 var builtinTypeAssociations = map[string]obj.Object{
@@ -164,15 +213,15 @@ func GetInput(env *obj.Env, varname string, dtype obj.DataType) obj.Object {
 	switch dtype.Dtype {
 	case "integer":
 		var val int64
-		fmt.Scanf("%d", &val)
+		fmt.Scanf("%d\n", &val)
 		env.Set(varname, &obj.Integer{Value: int64(val)})
 	case "float":
 		var val float64
-		fmt.Scanf("%f", &val)
+		fmt.Scanf("%f\n", &val)
 		env.Set(varname, &obj.Floating{Value: float64(val)})
 	case "boolean":
 		var val bool
-		fmt.Scanf("%t", &val)
+		fmt.Scanf("%t\n", &val)
 		env.Set(varname, &obj.Boolean{Value: bool(val)})
 	case "string":
 		reader := bufio.NewReader(os.Stdin)

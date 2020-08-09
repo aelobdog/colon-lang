@@ -13,5 +13,4 @@ REPL  : [===       ]
 
 ### TODO :
 
-- add builtin functions for arrays
 - generate documentation and add examples

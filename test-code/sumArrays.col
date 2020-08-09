@@ -1,2 +1,30 @@
-v: firstArray = [1, 2, 3]
-print("init is : ", init(init(init(firstArray))))
+v: arr = []
+v: num = 0
+
+print("Enter a number:")
+input(num, int)
+
+v: it = 0
+v: sum = 0
+v: n = 0
+
+l(it < num):
+    input(n, int)
+    push(arr, n)
+    v: sum = sum + n
+    v: it = it + 1
+:l
+
+print("array is :", arr)
+print("sum is:", sum)
+
+v: recursiveAdder = f(list):
+    i(isNull(list)):
+        r: 0
+    :i e:
+        head(list) + recursiveAdder(tail(list))
+    :e
+:f
+
+print("Recursively adding array elements:")
+print(recursiveAdder(arr))
