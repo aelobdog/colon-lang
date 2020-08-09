@@ -90,6 +90,7 @@ func CreateParserState(toks []tok.Token, locs []string) *Parser {
 	p.registerPrefixFunc(tok.FNB, p.parseFunctionExpression)
 	p.registerPrefixFunc(tok.LPB, p.parseLoopStatement)
 	p.registerPrefixFunc(tok.LSB, p.parseArray)
+	// p.registerPrefixFunc(tok.CMT, p.parseComment)
 
 	// registering all the valid INFIX tokens
 	p.registerInfixFunc(tok.EQL, p.parseInfixExpression)
@@ -147,8 +148,6 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseVarStatement()
 	case tok.RET:
 		return p.parseReturnStatement()
-	// case tok.BRK:
-	// 	return
 	case tok.EOL:
 		return nil
 	default:

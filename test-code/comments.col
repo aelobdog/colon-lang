@@ -1,0 +1,7 @@
+print("This is a program to test comments in colon")
+
+#
+    Comment 1 
+#
+
+print("hello")

@@ -127,6 +127,8 @@ func (l *Lexer) NextToken() tok.Token {
 			token = l.readWord()
 		} else if l.Ch == '"' {
 			token = l.readString()
+		} else if l.Ch == '#' {
+			token = l.readComment()
 		} else {
 			token = tok.NewToken(tok.ILG, string(l.Ch), l.line)
 		}
@@ -197,6 +199,14 @@ func (l *Lexer) readString() tok.Token {
 		}
 	}
 	return tok.NewToken(tok.STR, str, l.line)
+}
+
+func (l *Lexer) readComment() tok.Token {
+	l.ReadChar()
+	for l.Ch != '#' {
+		l.ReadChar()
+	}
+	return tok.NewToken(tok.EOL, "", l.line)
 }
 
 func (l *Lexer) consumeWhiteSpace() {
