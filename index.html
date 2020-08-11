@@ -263,6 +263,105 @@
           ><span style="float: right;" class="mono">Boolean Negation</span
           ><br />
         </center>
+        <br /><br />
+        <p style="font-family: Playfair Display;">
+          Operations on Strings
+        </p>
+        <center
+          style="
+            width: 30%;
+            background-color: #f7f7f7;
+            padding: 20px;
+            border-radius: 5px;
+          "
+        >
+          <span style="float: left;" class="mono">+ </span
+          ><span style="float: right;" class="mono">concatination</span>
+          <br />
+        </center>
+        <br />
+        <br />
+        <p style="font-family: Playfair Display;">
+          Operations on Lists
+        </p>
+        <center
+          style="
+            width: 30%;
+            background-color: #f7f7f7;
+            padding: 20px;
+            border-radius: 5px;
+          "
+        >
+          <span style="float: left;" class="mono">+ </span
+          ><span style="float: right;" class="mono">concatination</span>
+          <br />
+        </center>
+        <br /><br />
+        <p class="sub-heading-wide">Builtin Functions</p>
+        <p class="thin">
+          Colon has a very minimal set of builtin functions. Two very useful
+          functions that Colon provides are the
+          <span class="code">print</span> and the
+          <span class="code">input</span>
+          functions.
+          <br />
+          <br />
+          The print function can take in any number or arguments. It prints each
+          argument on a new line and does not support formatting like C or Go's
+          printf function (if need be, I might add in this feature later
+          sometime). A simple "hello, world!" print statement may look like
+          this:
+          <br /><br />
+          <center>
+            <span class="code">print("hello, world!")</span>
+          </center>
+          <br />
+        </p>
+        <p class="thin">
+          The input function is perhaps the only function in Colon that requires
+          the programmer to specify the datatype of the expected input. The
+          general syntax of an input function call is as follows:
+          <center>
+            <br />
+            <span class="code">input(variable_name, expected_type)</span>
+          </center>
+          <br />
+        </p>
+        <p class="thin">
+          It is important to remember that uninitialized/undeclared variables
+          cannot be used as arguments to any of these functions. Using variables
+          that haven't been declared result in errors during runtime.
+          <br /><br />
+          Strings and Lists have a bunch of builtin functions that can be used
+          with them. the
+          <span class="code">len</span>, <span class="code">head</span> and
+          <span class="code">last</span> functions operate on both strings and
+          lists.
+          <br />
+          <br />
+          As expected, the len function returns the length of the string or the
+          list passed to it as its argument.
+          <br />
+          <br />
+          This allows us to do something like :
+          <br />
+          <center>
+            <br />
+            <span class="code">
+              v: length_of_hello = len("hello")
+            </span>
+          </center>
+          <br />
+        </p>
+        <p class="thin">
+          The head and last functions return the first and last elements of the
+          given list or string respectively. Thus,<br /><br />
+          <center>
+            <span class="code">head([1, 2, 3, 4]) ---> returns 1</span
+            ><br /><br />
+            <span class="code">last("world") ---> returns d<br /></span>
+          </center>
+        </p>
         <hr />
       </div>
     </center>
