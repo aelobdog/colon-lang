@@ -8,14 +8,6 @@
 
     r: value
 
-### break
-
-    b:
-
-### continue
-
-    c:
-
 ### if condition
 
     i (condition) :

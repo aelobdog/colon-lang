@@ -29,10 +29,18 @@
     <title>Colon Programming Language</title>
     <meta charset="UTF-8" />
     <link
-      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500&family=Playfair+Display:wght@400&&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@500&family=Playfair+Display:wght@500&family=Noto+Sans&family=Playfair+Display:wght@400&&display=swap"
       rel="stylesheet"
     />
     <style>
+      .page {
+        width: 50%;
+        margin-top: 0;
+        padding-top: 0;
+        padding-left: 100px;
+        padding-right: 100px;
+      }
+
       .heading {
         font-size: 24px;
         font-family: "Playfair Display", serif;
@@ -43,6 +51,17 @@
         font-size: 18px;
         font-family: "Playfair Display", serif;
         font-weight: 400;
+      }
+
+      .sub-heading-wide {
+        font-size: 18px;
+        font-family: "Playfair Display", serif;
+        font-weight: 400;
+        margin-top: 25px;
+        background-color: #dcdcdc;
+        border-radius: 3px;
+        padding: 5px;
+        width: 75%;
       }
 
       .link {
@@ -56,21 +75,40 @@
       }
 
       .thin {
-        width: 65%;
+        width: 70%;
         font-size: 16px;
-        font-family: "Playfair Display", serif;
-        font-weight: 400;
+        font-family: "Noto Sans", sans-serif;
         text-align: justify;
       }
 
+      .left-align {
+        justify-content: left;
+      }
+
       hr {
-        width: 80%;
+        width: 85%;
+      }
+
+      .code {
+        font-size: 16px;
+        font-family: Inconsolata, monospace;
+        background-color: #dcdcdc;
+        color: #333;
+        padding: 3px;
+        padding-left: 5px;
+        padding-right: 5px;
+      }
+
+      .mono {
+        font-size: 16px;
+        font-family: Inconsolata, monospace;
+        color: #333;
       }
     </style>
   </head>
   <body>
     <center>
-      <div style="width: 50%;">
+      <div class="page">
         <p class="heading">
           The Colon Programming Language
         </p>
@@ -92,59 +130,139 @@
         <br />
         <hr />
         <p class="heading">
-          <a class="link" href="https://github.com/ashvin-godbole/bru">Bru</a>
+          Purpose
         </p>
         <p class="thin">
-          <em>
-            Bru is an HDL based electronics simulator. It stitches together HDL
-            files and input(script) files to produce a Go program, which when
-            run, outputs the results of the simulation.
-            <br /><br />
-            I've made a YouTube playlist on the basics of this tool. It can be
-            found
-            <a
-              class="link"
-              href="https://www.youtube.com/watch?v=pwbpNgjkWDA&list=PL7TWTwlde5Vm8ahAJga-ze4AIi38XCAkX"
-            >
-              here.
-            </a>
-            <br /><br />
-            Implemention language : Go
-          </em>
+          I've wanted to implement my own programming language for quite some
+          time. Thorsten Ball's amazing book, "Writing an interpreter in Go",
+          was instrumental in the construction of Colon's interpretter. Colon's
+          syntax may vary from that of the Monkey programming language, but that
+          book is the source of much of what I have learnt about writing
+          interpreters. Colon is influenced by functional languages like Haskell
+          in some ways, and also by imperetive languages like Go itself. Its a
+          mish-mash of different ideas and is quite interesting to use.
+          <br /><br />
+          Since it is a toy language though, I haven't designed it with any
+          specific goals in mind. It is not a production ready language by any
+          means, and may have bugs that I remain unaware of. If you do find bugs
+          , feel free to open an issue on GitHub. If you're interested in
+          building interpreters too, you can even try fixing some bugs yourself
+          !
         </p>
         <br />
         <hr />
-        <p class="heading">
-          <a class="link" href="https://github.com/ashvin-godbole/dynar"
-            >Dynar</a
-          >
-        </p>
+        <p class="heading">Basic Syntax</p>
+        <p class="sub-heading-wide">Datatypes</p>
         <p class="thin">
-          <em>
-            Dynar is a C preprocessor of sorts that lets you use dynamic arrays
-            as if they were an inbuilt datatype in C. It lets you create
-            resizable arrays and provides functions to push, pop, insert and
-            delete elements in/belonging to the array.
-            <br /><br />
-            Implementation language : Java
-          </em>
+          Colon has 5 basic datatypes - integers, floating point numbers,
+          booleans, strings and lists. Integers, Floats, Booleans and Strings
+          are quite standard, just like they are in other programming languages.
+          The list datatype is similar to lists in Python, elements of a list
+          can be of any datatype. Colon has no usable NULL datatype
+          <em
+            >(even though internally, some expressions can evaluate to the EMPTY
+            datatype)</em
+          >.
         </p>
         <br />
-        <hr />
-        <p class="heading">
-          <a class="link" href="https://github.com/ashvin-godbole/colon-lang"
-            >Colon</a
-          >
-        </p>
+        <p class="sub-heading-wide">Variables</p>
         <p class="thin">
-          <em>
-            Colon is a toy programming language that I am designing based on my
-            learnings from an excellent book - "Writing interpreters in Go".
-            <br /><br />
-            Implementation language : Go
-          </em>
+          In Colon, variables are declared without specifying its datatype and
+          any variable can hold a value of any datatype. Since there is no
+          usable NULL datatype, a variable must be initialized during
+          declaration. Also, variables in Colon are immutable - expressions such
+          as <span class="code">x = x + 1</span> give some rather ugly error
+          messages.
+          <br />
+          <br />
         </p>
+        <center>
+          <p class="thin" style="text-align: center;">
+            Variable declaration (and simultaneous instantiation) syntax is<br />
+          </p>
+          <span class="code">v: variable_name = value</span><br />
+        </center>
+        <p class="thin">
+          Though variables are immutable, you can always reassign a value to a
+          variable using the declaration syntax. This works because the
+          expression on the right of an assignment is evaluated before the
+          expression on the left. Regarding the previous example, if one wants
+          to assign the value of
+          <span class="code">x + 1</span> back to
+          <span class="code">x</span> one can do something like this :<br />
+        </p>
+        <center>
+          <span class="code">v: x = 12</span><br /><br />
+          <span class="code">v: x = x + 1</span>
+        </center>
         <br />
+        <br />
+        <p class="sub-heading-wide">Operators and Operations</p>
+        <p style="font-family: Playfair Display;">Operations on Integers</p>
+        <center
+          style="
+            width: 30%;
+            background-color: #f7f7f7;
+            padding: 20px;
+            border-radius: 5px;
+          "
+        >
+          <span style="float: left;" class="mono">+ </span
+          ><span style="float: right;" class="mono">addition</span><br /><br />
+          <span style="float: left;" class="mono">- </span
+          ><span style="float: right;" class="mono">subtraction</span
+          ><br /><br />
+          <span style="float: left;" class="mono">* </span
+          ><span style="float: right;" class="mono">multiplication</span
+          ><br /><br />
+          <span style="float: left;" class="mono">/ </span
+          ><span style="float: right;" class="mono">division</span><br /><br />
+          <span style="float: left;" class="mono">% </span
+          ><span style="float: right;" class="mono">modulo</span><br /><br />
+          <span style="float: left;" class="mono">^ </span
+          ><span style="float: right;" class="mono">power</span><br />
+        </center>
+        <br />
+        <br />
+        <p style="font-family: Playfair Display;">
+          Operations on Floating Point Nnumbers
+        </p>
+        <center
+          style="
+            width: 30%;
+            background-color: #f7f7f7;
+            padding: 20px;
+            border-radius: 5px;
+          "
+        >
+          <span style="float: left;" class="mono">+ </span
+          ><span style="float: right;" class="mono">addition</span><br /><br />
+          <span style="float: left;" class="mono">- </span
+          ><span style="float: right;" class="mono">subtraction</span
+          ><br /><br />
+          <span style="float: left;" class="mono">* </span
+          ><span style="float: right;" class="mono">multiplication</span
+          ><br /><br />
+          <span style="float: left;" class="mono">/ </span
+          ><span style="float: right;" class="mono">division</span><br />
+        </center>
+        <br />
+        <br />
+        <p style="font-family: Playfair Display;">
+          Operations on Booleans
+        </p>
+        <center
+          style="
+            width: 30%;
+            background-color: #f7f7f7;
+            padding: 20px;
+            border-radius: 5px;
+          "
+        >
+          <span style="float: left;" class="mono">! </span
+          ><span style="float: right;" class="mono">Boolean Negation</span
+          ><br />
+        </center>
         <hr />
       </div>
     </center>
